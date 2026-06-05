@@ -6,7 +6,7 @@
 
 import { getAuth } from 'firebase/auth';
 
-const API_BASE = 'http://localhost:3848';
+const API_BASE = 'https://algoritmia-pi.vercel.app';
 
 // Mapas de categorías de YouTube a nombres legibles
 const CATEGORY_MAP = {
