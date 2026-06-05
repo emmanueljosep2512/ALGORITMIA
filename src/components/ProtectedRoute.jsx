@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-    const { user, loading } = useAuth();
+    const { user, loading, logout } = useAuth();
+    const [authError, setAuthError] = useState(null);
+
+    useEffect(() => {
+        if (!loading && user) {
+            const adminEmailsStr = import.meta.env.VITE_ADMIN_EMAILS || '';
+            const adminEmails = adminEmailsStr.split(',').map(email => email.trim().toLowerCase());
+            
+            if (!adminEmails.includes(user.email?.toLowerCase())) {
+                setAuthError('Acceso denegado: Esta versión Beta es de acceso exclusivo para el administrador.');
+                logout();
+            }
+        }
+    }, [user, loading, logout]);
 
     if (loading) {
         return (
@@ -20,8 +33,12 @@ const ProtectedRoute = ({ children }) => {
         );
     }
 
+    if (authError) {
+        return <Navigate to="/login" state={{ error: authError }} replace />;
+    }
+
     if (!user) {
-        return <Navigate to="/login" />;
+        return <Navigate to="/login" replace />;
     }
 
     return children;

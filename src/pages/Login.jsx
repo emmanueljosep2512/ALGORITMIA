@@ -1,21 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
 const Login = () => {
-  const { user, loginWithGoogle, loginWithMicrosoft } = useAuth();
+  const { user, loginWithGoogle, loginWithMicrosoft, logout } = useAuth();
+  const location = useLocation();
   const [redirecting, setRedirecting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(location.state?.error || '');
 
-  // Si ya está logueado, mandarlo al dashboard
-  if (user) return <Navigate to="/dashboard" />;
+  const adminEmailsStr = import.meta.env.VITE_ADMIN_EMAILS || '';
+  const adminEmails = adminEmailsStr.split(',').map(email => email.trim().toLowerCase());
+  const isAdmin = user && adminEmails.includes(user.email?.toLowerCase());
+
+  useEffect(() => {
+    if (user && !isAdmin) {
+      setError('Acceso denegado: Esta versión Beta es de acceso exclusivo para el administrador.');
+      logout();
+    }
+  }, [user, isAdmin, logout]);
+
+  // Si ya está logueado y es admin, mandarlo al dashboard
+  if (user && isAdmin) return <Navigate to="/dashboard" replace />;
 
   const handleLogin = async (providerFunc) => {
     setRedirecting(true);
     setError('');
     try {
       await providerFunc();
-      // signInWithRedirect no resuelve aquí, el navegador se va a Google
     } catch (err) {
       console.error('Error al iniciar sesión:', err);
       setError(err.message || 'Error de autenticación');

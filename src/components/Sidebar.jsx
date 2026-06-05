@@ -89,7 +89,15 @@ export default function Sidebar() {
 
                 <div className="plan-badge" style={{ marginTop: 12 }}>
                     <div className="plan-badge-label">Plan Actual</div>
-                    <div className="plan-badge-name">⚡ PRO</div>
+                    <div className="plan-badge-name">⚡ BETA (ADMIN)</div>
+                    <a
+                        href="https://buy.stripe.com/test_4gw291e0H96j9vScMM"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="subscribe-btn"
+                    >
+                        <Zap size={12} fill="currentColor" /> Activar Premium
+                    </a>
                 </div>
             </div>
         </aside>
