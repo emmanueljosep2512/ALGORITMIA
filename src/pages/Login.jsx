@@ -16,6 +16,7 @@ const Login = () => {
     if (user && !isAdmin) {
       setError('Acceso denegado: Esta versión Beta es de acceso exclusivo para el administrador.');
       logout();
+      setRedirecting(false);
     }
   }, [user, isAdmin, logout]);
 
@@ -27,6 +28,7 @@ const Login = () => {
     setError('');
     try {
       await providerFunc();
+      setRedirecting(false);
     } catch (err) {
       console.error('Error al iniciar sesión:', err);
       setError(err.message || 'Error de autenticación');
