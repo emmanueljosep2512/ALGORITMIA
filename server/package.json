@@ -1,0 +1,19 @@
+{
+    "name": "algoritmia-server",
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node --watch server.js"
+    },
+    "dependencies": {
+        "@google/generative-ai": "^0.24.1",
+        "cors": "^2.8.6",
+        "dotenv": "^16.6.1",
+        "express": "^4.22.2",
+        "firebase-admin": "^13.10.0",
+        "groq-sdk": "^1.2.1",
+        "node-fetch": "^3.3.2",
+        "rss-parser": "^3.13.0"
+    }
+}

@@ -1,0 +1,3 @@
+// No se puede escribir contenido binario con write_to_file directamente de forma fiable si no tengo la ruta del archivo temporal.
+// Sin embargo, puedo referenciar la imagen cargada por el usuario. 
+// La imagen está en el mensaje del usuario. 

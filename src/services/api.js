@@ -1,0 +1,165 @@
+/**
+ * AlgoritmIA — API Service Layer
+ * 
+ * Conecta el frontend con el backend proxy.
+ */
+
+import { getAuth } from 'firebase/auth';
+
+const API_BASE = 'http://localhost:3848';
+
+// Mapas de categorías de YouTube a nombres legibles
+const CATEGORY_MAP = {
+    '1': 'Film & Animation', '2': 'Autos', '10': 'Music',
+    '15': 'Pets', '17': 'Sports', '19': 'Travel',
+    '20': 'Gaming', '22': 'People & Blogs', '23': 'Comedy',
+    '24': 'Entertainment', '25': 'News', '26': 'Howto & Style',
+    '27': 'Education', '28': 'Science & Tech', '29': 'Nonprofits',
+};
+
+/**
+ * Helper para obtener el ID Token de Firebase
+ */
+async function getAuthHeaders() {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    const headers = { 'Content-Type': 'application/json' };
+
+    if (user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
+}
+
+/**
+ * Verificar si el backend está corriendo y configurado
+ */
+export async function checkHealth() {
+    try {
+        const res = await fetch(`${API_BASE}/api/health`);
+        if (!res.ok) return { ok: false, error: 'Backend no responde' };
+        return { ok: true, ...(await res.json()) };
+    } catch {
+        return { ok: false, error: 'Backend no disponible. Ejecuta: cd server && npm run dev' };
+    }
+}
+
+/**
+ * Obtener videos trending en tiempo real
+ */
+export async function fetchTrending({ region = 'US', category = '0', max = 24 } = {}) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/trending?region=${region}&category=${category}&max=${max}`, {
+        headers
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || res.statusText}`);
+    const data = await res.json();
+    return enrichVideos(data.videos, data.meta);
+}
+
+/**
+ * Buscar videos por keyword
+ */
+export async function searchVideos({ q, max = 12, language = '', region = '', order = 'viewCount', publishedAfter = '' } = {}) {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams({ q, max, language, region, order, publishedAfter });
+    const res = await fetch(`${API_BASE}/api/search?${params}`, {
+        headers
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || res.statusText}`);
+    const data = await res.json();
+    return enrichVideos(data.videos, data.meta);
+}
+
+/**
+ * Obtener datos de un canal específico
+ */
+export async function fetchChannel(channelId) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/channel/${channelId}`, { headers });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
+}
+
+/**
+ * Obtener categorías de YouTube para una región
+ */
+export async function fetchCategories(region = 'US') {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/categories?region=${region}`, { headers });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
+}
+
+/**
+ * Obtener tendencias de mercado (Google Trends RSS)
+ */
+export async function fetchMarketTrends(geo = 'US') {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/market-trends?geo=${geo}`, { headers });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
+}
+
+/**
+ * Obtener consejos de IA basados en datos reales
+ */
+export async function fetchAIAdvisor({ niche, stats, videos }) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/ai-advisor`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ niche, stats, videos }),
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || 'Error desconocido'}`);
+    return res.json();
+}
+
+/**
+ * Enriquecer datos de videos con formato consistente para el UI
+ */
+function enrichVideos(videos, meta) {
+    return {
+        videos: (videos || []).map(v => ({
+            ...v,
+            publishedAt: new Date(v.publishedAt),
+            category: CATEGORY_MAP[v.category] || v.category || 'General',
+            channelAvatar: v.channelAvatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(v.channel)}&backgroundColor=7B2FFF&textColor=fff`,
+        })),
+        meta,
+    };
+}
+
+// ═══════════════════════════════════════════════════
+// FORMATEADORES (compartidos para uso en componentes)
+// ═══════════════════════════════════════════════════
+export const formatViews = (v) => {
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (v >= 1_000) return `${Math.round(v / 1_000)}K`;
+    return String(v);
+};
+
+export const formatSubs = (s) => {
+    if (s >= 1_000_000) return `${(s / 1_000_000).toFixed(1)}M`;
+    if (s >= 1_000) return `${(s / 1_000).toFixed(1)}K`;
+    return String(s);
+};
+
+export const formatVPH = (v) => {
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M/h`;
+    if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K/h`;
+    return `${v}/h`;
+};
+
+export const timeAgo = (date) => {
+    if (!(date instanceof Date)) date = new Date(date);
+    const diff = Date.now() - date.getTime();
+    const mins = Math.floor(diff / (1000 * 60));
+    if (mins < 60) return `Hace ${mins}m`;
+    const h = Math.floor(mins / 60);
+    if (h < 24) return `Hace ${h}h`;
+    const d = Math.floor(h / 24);
+    return `Hace ${d}d`;
+};
