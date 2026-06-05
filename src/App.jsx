@@ -8,6 +8,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import VideoModal from './components/VideoModal';
 import ProtectedRoute from './components/ProtectedRoute';
+import VideoAnalyzer from './pages/VideoAnalyzer';
 import { AuthProvider } from './context/AuthContext';
 
 function AppContent({ setPlayingVideo }) {
@@ -42,6 +43,14 @@ function AppContent({ setPlayingVideo }) {
                         element={
                             <ProtectedRoute>
                                 <NicheFinder />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/analizador"
+                        element={
+                            <ProtectedRoute>
+                                <VideoAnalyzer />
                             </ProtectedRoute>
                         }
                     />

@@ -118,6 +118,24 @@ export async function fetchAIAdvisor({ niche, stats, videos }) {
 }
 
 /**
+ * Analizar un video específico (Métricas + IA)
+ */
+export async function analyzeVideo(videoId) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/analyze-video?id=${videoId}`, { headers });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || 'Error al analizar video'}`);
+    const data = await res.json();
+    return {
+        video: {
+            ...data.video,
+            publishedAt: new Date(data.video.publishedAt),
+            channelAvatar: data.video.channelAvatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(data.video.channel)}&backgroundColor=7B2FFF&textColor=fff`,
+        },
+        analysis: data.analysis,
+    };
+}
+
+/**
  * Enriquecer datos de videos con formato consistente para el UI
  */
 function enrichVideos(videos, meta) {

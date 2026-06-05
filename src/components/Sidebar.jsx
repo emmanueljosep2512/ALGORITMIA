@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Search, Compass, Flame, TrendingUp, Cpu, Zap, WifiOff } from 'lucide-react';
+import { LayoutDashboard, Search, Compass, Flame, TrendingUp, Cpu, Zap, WifiOff, Sparkles } from 'lucide-react';
 import { checkHealth } from '../services/api';
 
 const NAV_ITEMS = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Trending Ahora', badge: null },
     { to: '/buscar', icon: Search, label: 'Buscar Videos', badge: null },
-    { to: '/nichos', icon: Compass, label: 'Buscar Nichos', badge: 'NUEVO' },
+    { to: '/nichos', icon: Compass, label: 'Buscar Nichos', badge: null },
+    { to: '/analizador', icon: Sparkles, label: 'Analizar Video', badge: 'NUEVO' },
 ];
 
 export default function Sidebar() {

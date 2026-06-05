@@ -396,6 +396,106 @@ app.get('/api/channel/:channelId', checkAuth, async (req, res) => {
     }
 });
 
+app.get('/api/analyze-video', checkAuth, async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) return res.status(400).json({ error: 'Falta id del video' });
+
+        const cacheKey = `analyze:${id}`;
+        const cached = getCached(cacheKey);
+        if (cached) return res.json(cached);
+
+        // 1. Obtener detalles del video
+        const vData = await ytFetch('videos', { part: 'snippet,statistics,contentDetails', id });
+        if (!vData.items || vData.items.length === 0) {
+            return res.status(404).json({ error: 'Video no encontrado en YouTube' });
+        }
+        const rawVideo = vData.items[0];
+
+        // 2. Obtener estadísticas del canal
+        const channelId = rawVideo.snippet?.channelId;
+        let channelSubs = 0;
+        let channelAvgViews = null;
+        if (channelId) {
+            try {
+                const chData = await ytFetch('channels', { part: 'statistics', id: channelId });
+                if (chData.items && chData.items.length > 0) {
+                    const stats = chData.items[0].statistics || {};
+                    channelSubs = parseInt(stats.subscriberCount || 0);
+                    const chViews = parseInt(stats.viewCount || 0);
+                    const chVids = parseInt(stats.videoCount || 1);
+                    channelAvgViews = chViews / chVids;
+                }
+            } catch (chErr) {
+                console.warn('Error fetching channel stats for analysis:', chErr.message);
+            }
+        }
+
+        // 3. Calcular momentum y transformar
+        const mom = calculateMomentumScore(rawVideo, channelAvgViews);
+        const video = transformVideo(rawVideo, mom);
+        video.channelSubs = channelSubs;
+
+        // 4. Generar análisis con IA si Groq está disponible
+        let analysis = 'No se pudo generar el análisis en este momento.';
+        if (process.env.GROQ_API_KEY) {
+            const prompt = `
+# CONTEXT
+You are the elite "Cerebro IA" for AlgoritmIA. Your task is to perform a clinical, data-backed success analysis of a specific YouTube video.
+
+# OBJECTIVE
+Analyze the following video details and performance metrics:
+- Video Title: "${video.title}"
+- Channel Name: "${video.channel}" (with ${channelSubs.toLocaleString()} subscribers)
+- Total Views: ${video.views.toLocaleString()} views
+- Views Per Hour (VPH): ${video.vph} VPH
+- Outlier Multiplier (Outlier Ratio): x${video.outlierRatio} (this video performed ${video.outlierRatio}x better than the channel's historical average)
+- Audience Engagement Rate: ${video.engagementRate}% (Likes & Comments vs Views)
+- Momentum Score: ${video.momentumScore}/100 (Velocity rating: ${video.trending.toUpperCase()})
+
+# STYLE
+Objective, data-driven, strategic, and highly action-oriented. Write in professional Spanish (es-ES). Get straight to the point without introductory fluff.
+
+# TONE
+Analytical, authoritative, and encouraging.
+
+# AUDIENCE
+Creators and YTA entrepreneurs looking to replicate successful viral patterns.
+
+# RESPONSE FORMAT (MARKDOWN)
+Structure your output exactly as follows:
+### 📈 FACTORES DE ÉXITO
+[Deconstruct the title hook, thumbnail strategy, and visual framing. Why did this video achieve a ${video.outlierRatio}x multiplier compared to the channel's normal reach?]
+
+### 🎯 ÁNGULO Y NARRATIVA
+[Explain the core psychological trigger of this theme and content angle. Why did the audience click and stay?]
+
+### 💡 CÓMO REPLICARLO
+[Give a concrete, step-by-step actionable blueprint for the user to create their own video on this topic, stating the hook structure for the first 5 seconds and what pattern interrupts to use.]
+
+# THINKING METHODOLOGY (CHAIN OF THOUGHT)
+Before generating the final response, write your step-by-step reasoning inside <thought>...</thought> tags, analyzing the outlier ratio, the VPH speed, and the optimal hook strategy. Focus on self-consistency by matching the CPM potential of the topic with the proposed hook.
+`;
+
+            const chatCompletion = await groq.chat.completions.create({
+                messages: [{ role: 'user', content: prompt }],
+                model: 'llama-3.3-70b-versatile',
+            });
+
+            let aiContent = chatCompletion.choices[0]?.message?.content || '';
+            // Remove <thought>...</thought> tags
+            analysis = aiContent.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
+        }
+
+        const result = { video, analysis };
+        setCache(cacheKey, result);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in analyze-video:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
