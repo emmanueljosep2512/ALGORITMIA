@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Play, Search, Brain, Cpu, Loader2, Sparkles, Youtube, Flame, TrendingUp, Eye, Zap, ShieldCheck } from 'lucide-react';
 import { analyzeVideo, formatViews, formatVPH } from '../services/api';
+import { hasCredits, consumeCredit } from '../services/credits';
 
 function extractVideoId(url) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -16,6 +17,12 @@ export default function VideoAnalyzer() {
 
     const handleAnalyze = async (e) => {
         if (e) e.preventDefault();
+
+        if (!hasCredits()) {
+            setError('Has agotado tus créditos de consulta. Por favor recarga créditos en el menú lateral para continuar.');
+            return;
+        }
+
         const videoId = extractVideoId(urlInput);
         if (!videoId) {
             setError('Por favor, ingresa un enlace válido de YouTube (ej. https://www.youtube.com/watch?v=...)');
@@ -29,6 +36,7 @@ export default function VideoAnalyzer() {
         try {
             const data = await analyzeVideo(videoId);
             setResult(data);
+            consumeCredit();
         } catch (err) {
             console.error(err);
             setError(err.message || 'Error al conectar con el servidor. Verifica que tu backend esté encendido.');

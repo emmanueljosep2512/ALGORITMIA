@@ -4,6 +4,7 @@ import SearchBar from '../components/SearchBar';
 import VideoCard from '../components/VideoCard';
 import FiltersPanel from '../components/FiltersPanel';
 import { searchVideos, checkHealth, formatViews } from '../services/api';
+import { hasCredits, consumeCredit } from '../services/credits';
 import { MOCK_VIDEOS, LANGUAGES, TRENDING_FILTERS } from '../data/mockVideos';
 
 const SORT_OPTIONS = ['Momentum Score', 'VPH (Vistas/hora)', 'Outlier Ratio', 'Vistas Totales'];
@@ -40,6 +41,13 @@ export default function VideoSearch({ onPlayVideo }) {
 
     const handleSearch = async (q) => {
         if (!q.trim()) return;
+
+        if (!hasCredits()) {
+            setError('Has agotado tus créditos de consulta. Por favor recarga créditos en el menú lateral para continuar.');
+            alert('Has agotado tus créditos de consulta. Por favor recarga créditos en el menú lateral para continuar.');
+            return;
+        }
+
         setQuery(q);
         setSearched(true);
         setLoading(true);
@@ -59,6 +67,7 @@ export default function VideoSearch({ onPlayVideo }) {
                 setMeta(data.meta);
                 setIsLive(true);
                 setLoading(false);
+                consumeCredit();
                 return;
             } catch (e) {
                 console.warn('Búsqueda real falló:', e.message);
@@ -80,6 +89,7 @@ export default function VideoSearch({ onPlayVideo }) {
         if (!health.ok) setError('Backend offline. Ejecuta: cd server && npm run dev');
         else if (health.keysConfigured === 0) setError('API Key no configurada');
         setLoading(false);
+        consumeCredit();
     };
 
     // Ordenar localmente

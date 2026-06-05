@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowUnsubscribed = false }) => {
     const { user, loading, logout } = useAuth();
     const [authError, setAuthError] = useState(null);
+    const [needsSubscription, setNeedsSubscription] = useState(false);
 
     useEffect(() => {
         if (!loading && user) {
@@ -14,9 +15,21 @@ const ProtectedRoute = ({ children }) => {
             if (!adminEmails.includes(user.email?.toLowerCase())) {
                 setAuthError('Acceso denegado: Esta versión Beta es de acceso exclusivo para el administrador.');
                 logout();
+                return;
+            }
+
+            if (!allowUnsubscribed) {
+                const isSubscribed = localStorage.getItem('algoritmia_subscribed') === 'true';
+                if (!isSubscribed) {
+                    setNeedsSubscription(true);
+                } else {
+                    setNeedsSubscription(false);
+                }
+            } else {
+                setNeedsSubscription(false);
             }
         }
-    }, [user, loading, logout]);
+    }, [user, loading, logout, allowUnsubscribed]);
 
     if (loading) {
         return (
@@ -39,6 +52,10 @@ const ProtectedRoute = ({ children }) => {
 
     if (!user) {
         return <Navigate to="/login" replace />;
+    }
+
+    if (needsSubscription && !allowUnsubscribed) {
+        return <Navigate to="/suscripcion" replace />;
     }
 
     return children;

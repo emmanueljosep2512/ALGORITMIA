@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Search, Compass, Flame, TrendingUp, Cpu, Zap, WifiOff, Sparkles } from 'lucide-react';
 import { checkHealth } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Trending Ahora', badge: null },
@@ -11,7 +12,13 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
+    const { logout } = useAuth();
     const [health, setHealth] = useState({ ok: false, loading: true });
+    const [subscription, setSubscription] = useState({
+        plan: localStorage.getItem('algoritmia_plan') || 'BETA (DEMO)',
+        credits: parseInt(localStorage.getItem('algoritmia_credits') || '0', 10),
+        creditsTotal: parseInt(localStorage.getItem('algoritmia_credits_total') || '0', 10),
+    });
 
     useEffect(() => {
         async function getHealth() {
@@ -20,7 +27,23 @@ export default function Sidebar() {
         }
         const timer = setInterval(getHealth, 30000);
         getHealth();
-        return () => clearInterval(timer);
+
+        const updateSubscription = () => {
+            setSubscription({
+                plan: localStorage.getItem('algoritmia_plan') || 'BETA (DEMO)',
+                credits: parseInt(localStorage.getItem('algoritmia_credits') || '0', 10),
+                creditsTotal: parseInt(localStorage.getItem('algoritmia_credits_total') || '0', 10),
+            });
+        };
+
+        window.addEventListener('storage', updateSubscription);
+        window.addEventListener('creditsUpdated', updateSubscription);
+
+        return () => {
+            clearInterval(timer);
+            window.removeEventListener('storage', updateSubscription);
+            window.removeEventListener('creditsUpdated', updateSubscription);
+        };
     }, []);
 
     return (
@@ -89,16 +112,56 @@ export default function Sidebar() {
 
                 <div className="plan-badge" style={{ marginTop: 12 }}>
                     <div className="plan-badge-label">Plan Actual</div>
-                    <div className="plan-badge-name">⚡ BETA (ADMIN)</div>
+                    <div className="plan-badge-name" style={{ fontSize: '0.9rem' }}>
+                        ⚡ {subscription.plan}
+                    </div>
+                    <div className="plan-badge-credits" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                        <span>Consultas:</span>
+                        <strong style={{ color: subscription.credits > 0 ? 'var(--accent-cyan)' : 'var(--accent-red)' }}>
+                            {subscription.credits} / {subscription.creditsTotal}
+                        </strong>
+                    </div>
                     <a
                         href="https://buy.stripe.com/test_4gw291e0H96j9vScMM"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="subscribe-btn"
                     >
-                        <Zap size={12} fill="currentColor" /> Activar Premium
+                        <Zap size={10} fill="currentColor" /> Recargar
                     </a>
                 </div>
+
+                <button
+                    onClick={() => logout()}
+                    className="sidebar-logout-btn"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        width: '100%',
+                        marginTop: 10,
+                        padding: '8px',
+                        background: 'rgba(255, 80, 80, 0.08)',
+                        border: '1px solid rgba(255, 80, 80, 0.15)',
+                        borderRadius: 'var(--radius-md)',
+                        color: '#ff6b6b',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 80, 80, 0.15)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 80, 80, 0.08)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.15)';
+                    }}
+                >
+                    Cerrar Sesión
+                </button>
             </div>
         </aside>
     );

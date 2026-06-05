@@ -9,11 +9,12 @@ import Login from './pages/Login';
 import VideoModal from './components/VideoModal';
 import ProtectedRoute from './components/ProtectedRoute';
 import VideoAnalyzer from './pages/VideoAnalyzer';
+import SubscriptionBarrier from './pages/SubscriptionBarrier';
 import { AuthProvider } from './context/AuthContext';
 
 function AppContent({ setPlayingVideo }) {
     const location = useLocation();
-    const isPublic = location.pathname === '/' || location.pathname === '/login';
+    const isPublic = location.pathname === '/' || location.pathname === '/login' || location.pathname === '/suscripcion';
 
     return (
         <div className={`app-layout ${isPublic ? 'landing-layout' : ''}`}>
@@ -22,6 +23,14 @@ function AppContent({ setPlayingVideo }) {
                 <Routes>
                     <Route path="/" element={<Landing />} />
                     <Route path="/login" element={<Login />} />
+                    <Route
+                        path="/suscripcion"
+                        element={
+                            <ProtectedRoute allowUnsubscribed={true}>
+                                <SubscriptionBarrier />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route
                         path="/dashboard"
                         element={

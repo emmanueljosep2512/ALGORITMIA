@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Target, Zap, TrendingUp, BarChart3, Info, AlertTriangle, CheckCircle2, DollarSign, Cpu, Loader2, Search, Brain, ShieldCheck, Sparkles, MessageSquare } from 'lucide-react';
 import { searchVideos, checkHealth, fetchAIAdvisor } from '../services/api';
+import { hasCredits, consumeCredit } from '../services/credits';
 
 export default function NicheEvaluator() {
     const [topic, setTopic] = useState('');
@@ -26,6 +27,13 @@ export default function NicheEvaluator() {
 
     const performSmartAnalysis = async () => {
         if (!topic.trim()) return;
+
+        if (!hasCredits()) {
+            setAnalysisLog('Error: Has agotado tus créditos de consulta. Por favor recarga créditos.');
+            alert('Has agotado tus créditos de consulta. Por favor recarga créditos en el menú lateral para continuar.');
+            return;
+        }
+
         setIsCalculating(true);
         setIsAiLoading(true);
         setShowResult(false);
@@ -89,6 +97,7 @@ export default function NicheEvaluator() {
                     videos: currentVideos
                 });
                 setAiAdvice(aiResponse.advice);
+                consumeCredit(); // Consumir crédito tras respuesta IA
             } catch (aiErr) {
                 console.error('Error en AI Advisor:', aiErr);
                 setAiAdvice('No se pudo generar el consejo estratégico en este momento.');
