@@ -58,7 +58,7 @@ const SubscriptionBarrier = () => {
                     </div>
                     <div className="card-footer">
                         <a 
-                            href="https://buy.stripe.com/test_4gw291e0H96j9vScMM" 
+                            href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=emmanueljosep2512@gmail.com&currency_code=USD&amount=19.00&item_name=AlgoritmIA%20-%20Plan%20Creador%20PRO" 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="pay-btn standard"
@@ -90,7 +90,7 @@ const SubscriptionBarrier = () => {
                     </div>
                     <div className="card-footer">
                         <a 
-                            href="https://buy.stripe.com/test_eVaeVf4ql3LZ6jGeUV" 
+                            href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=emmanueljosep2512@gmail.com&currency_code=USD&amount=39.00&item_name=AlgoritmIA%20-%20Plan%20Agencia%20Elite" 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="pay-btn premium"
@@ -130,7 +130,7 @@ const SubscriptionBarrier = () => {
                 <button className="back-btn" onClick={() => logout()}>
                     <ArrowLeft size={14} /> Cerrar Sesión
                 </button>
-                <p className="secure-text">🔒 Pagos procesados de forma segura mediante encriptación SSL de Stripe.</p>
+                <p className="secure-text">🔒 Pagos procesados de forma segura mediante encriptación SSL de PayPal.</p>
             </div>
 
             <style>{`

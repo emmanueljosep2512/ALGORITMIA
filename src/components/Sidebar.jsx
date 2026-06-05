@@ -122,7 +122,7 @@ export default function Sidebar() {
                         </strong>
                     </div>
                     <a
-                        href="https://buy.stripe.com/test_4gw291e0H96j9vScMM"
+                        href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=emmanueljosep2512@gmail.com&currency_code=USD&amount=9.99&item_name=AlgoritmIA%20-%20Recarga%2050%20Creditos"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="subscribe-btn"
