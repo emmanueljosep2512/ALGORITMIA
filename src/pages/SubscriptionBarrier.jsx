@@ -1,12 +1,44 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Zap, Check, ShieldCheck, Sparkles, AlertCircle, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Zap, Check, ShieldCheck, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const SubscriptionBarrier = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { logout } = useAuth();
     const [simulating, setSimulating] = useState(false);
+    const [paymentSuccess, setPaymentSuccess] = useState(false);
+    const [successPlan, setSuccessPlan] = useState('');
+
+    const successParam = searchParams.get('success');
+    const planParam = searchParams.get('plan');
+
+    useEffect(() => {
+        if (successParam === 'true' && (planParam === 'pro' || planParam === 'elite')) {
+            setPaymentSuccess(true);
+            const planName = planParam === 'pro' ? 'Creador PRO' : 'Agencia Élite';
+            const credits = planParam === 'pro' ? 150 : 400;
+            setSuccessPlan(planName);
+
+            // Activar suscripción e inyectar créditos de manera automática
+            localStorage.setItem('algoritmia_subscribed', 'true');
+            localStorage.setItem('algoritmia_plan', planName);
+            localStorage.setItem('algoritmia_credits', credits.toString());
+            localStorage.setItem('algoritmia_credits_total', credits.toString());
+
+            // Disparar eventos para actualizar Sidebar
+            window.dispatchEvent(new Event('storage'));
+            window.dispatchEvent(new Event('creditsUpdated'));
+
+            // Redirigir al dashboard tras 3 segundos
+            const timer = setTimeout(() => {
+                navigate('/dashboard');
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [successParam, planParam, navigate]);
 
     const handleSubscribeMock = (planName, credits) => {
         setSimulating(true);
@@ -16,7 +48,6 @@ const SubscriptionBarrier = () => {
             localStorage.setItem('algoritmia_credits', credits.toString());
             localStorage.setItem('algoritmia_credits_total', credits.toString());
             
-            // Notificar a otros componentes (como el Sidebar) que cambió el storage
             window.dispatchEvent(new Event('storage'));
             window.dispatchEvent(new Event('creditsUpdated'));
             
@@ -24,6 +55,41 @@ const SubscriptionBarrier = () => {
             navigate('/dashboard');
         }, 800);
     };
+
+    // Armar URLs de pago de PayPal de forma dinámica con el return URL del dominio activo
+    const origin = window.location.origin;
+    const paypalEmail = 'emmanueljosep2512@gmail.com';
+    
+    const paypalLinkPro = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${paypalEmail}&currency_code=USD&amount=19.00&item_name=AlgoritmIA%20-%20Plan%20Creador%20PRO&return=${encodeURIComponent(origin + '/suscripcion?success=true&plan=pro')}`;
+    const paypalLinkElite = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${paypalEmail}&currency_code=USD&amount=39.00&item_name=AlgoritmIA%20-%20Plan%20Agencia%20Elite&return=${encodeURIComponent(origin + '/suscripcion?success=true&plan=elite')}`;
+
+    if (paymentSuccess) {
+        return (
+            <div className="paywall-container">
+                <div className="success-payment-card" style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(0, 229, 160, 0.3)',
+                    borderRadius: 24,
+                    padding: '3rem',
+                    textAlign: 'center',
+                    maxWidth: 500,
+                    width: '100%',
+                    boxShadow: '0 0 40px rgba(0, 229, 160, 0.15)',
+                }}>
+                    <div className="logo-sparkle" style={{ fontSize: '3rem', textShadow: '0 0 20px rgba(0, 229, 160, 0.5)', marginBottom: '1rem' }}>🎉</div>
+                    <h2 style={{ fontFamily: 'Outfit', fontSize: '2rem', fontWeight: 800, color: 'var(--accent-green)', marginBottom: '1rem' }}>¡Pago Recibido con Éxito!</h2>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+                        Tu plan <strong>{successPlan}</strong> ha sido activado de forma automática y tus créditos han sido cargados.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                        <Loader2 size={32} className="spin" style={{ color: 'var(--accent-green)' }} />
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Redirigiendo al Dashboard en instantes...</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="paywall-container">
@@ -58,7 +124,7 @@ const SubscriptionBarrier = () => {
                     </div>
                     <div className="card-footer">
                         <a 
-                            href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=emmanueljosep2512@gmail.com&currency_code=USD&amount=19.00&item_name=AlgoritmIA%20-%20Plan%20Creador%20PRO" 
+                            href={paypalLinkPro} 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="pay-btn standard"
@@ -90,7 +156,7 @@ const SubscriptionBarrier = () => {
                     </div>
                     <div className="card-footer">
                         <a 
-                            href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=emmanueljosep2512@gmail.com&currency_code=USD&amount=39.00&item_name=AlgoritmIA%20-%20Plan%20Agencia%20Elite" 
+                            href={paypalLinkElite} 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="pay-btn premium"

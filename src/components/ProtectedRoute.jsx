@@ -3,8 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children, allowUnsubscribed = false }) => {
-    const { user, loading, logout } = useAuth();
-    const [authError, setAuthError] = useState(null);
+    const { user, loading } = useAuth();
     const [needsSubscription, setNeedsSubscription] = useState(false);
 
     useEffect(() => {
@@ -12,24 +11,28 @@ const ProtectedRoute = ({ children, allowUnsubscribed = false }) => {
             const adminEmailsStr = import.meta.env.VITE_ADMIN_EMAILS || '';
             const adminEmails = adminEmailsStr.split(',').map(email => email.trim().toLowerCase());
             
-            if (!adminEmails.includes(user.email?.toLowerCase())) {
-                setAuthError('Acceso denegado: Esta versión Beta es de acceso exclusivo para el administrador.');
-                logout();
-                return;
-            }
+            const isAdmin = adminEmails.includes(user.email?.toLowerCase());
 
-            if (!allowUnsubscribed) {
-                const isSubscribed = localStorage.getItem('algoritmia_subscribed') === 'true';
-                if (!isSubscribed) {
-                    setNeedsSubscription(true);
+            if (isAdmin) {
+                localStorage.setItem('algoritmia_subscribed', 'true');
+                localStorage.setItem('algoritmia_plan', 'ADMIN / ILIMITADO');
+                localStorage.setItem('algoritmia_credits', '99999');
+                localStorage.setItem('algoritmia_credits_total', '99999');
+                setNeedsSubscription(false);
+            } else {
+                if (!allowUnsubscribed) {
+                    const isSubscribed = localStorage.getItem('algoritmia_subscribed') === 'true';
+                    if (!isSubscribed) {
+                        setNeedsSubscription(true);
+                    } else {
+                        setNeedsSubscription(false);
+                    }
                 } else {
                     setNeedsSubscription(false);
                 }
-            } else {
-                setNeedsSubscription(false);
             }
         }
-    }, [user, loading, logout, allowUnsubscribed]);
+    }, [user, loading, allowUnsubscribed]);
 
     if (loading) {
         return (
@@ -44,10 +47,6 @@ const ProtectedRoute = ({ children, allowUnsubscribed = false }) => {
                 <div className="spinner">Cargando Sesión...</div>
             </div>
         );
-    }
-
-    if (authError) {
-        return <Navigate to="/login" state={{ error: authError }} replace />;
     }
 
     if (!user) {

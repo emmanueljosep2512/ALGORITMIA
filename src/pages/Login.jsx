@@ -3,25 +3,13 @@ import { useAuth } from '../context/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
 
 const Login = () => {
-  const { user, loginWithGoogle, loginWithMicrosoft, logout } = useAuth();
+  const { user, loginWithGoogle, loginWithMicrosoft } = useAuth();
   const location = useLocation();
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState(location.state?.error || '');
 
-  const adminEmailsStr = import.meta.env.VITE_ADMIN_EMAILS || '';
-  const adminEmails = adminEmailsStr.split(',').map(email => email.trim().toLowerCase());
-  const isAdmin = user && adminEmails.includes(user.email?.toLowerCase());
-
-  useEffect(() => {
-    if (user && !isAdmin) {
-      setError('Acceso denegado: Esta versión Beta es de acceso exclusivo para el administrador.');
-      logout();
-      setRedirecting(false);
-    }
-  }, [user, isAdmin, logout]);
-
-  // Si ya está logueado y es admin, mandarlo al dashboard
-  if (user && isAdmin) return <Navigate to="/dashboard" replace />;
+  // Si ya está logueado, mandarlo al dashboard (el guardián se encargará del resto)
+  if (user) return <Navigate to="/dashboard" replace />;
 
   const handleLogin = async (providerFunc) => {
     setRedirecting(true);
