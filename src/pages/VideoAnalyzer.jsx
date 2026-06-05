@@ -123,7 +123,10 @@ export default function VideoAnalyzer() {
                             borderRadius: 16,
                             overflow: 'hidden',
                             border: '1px solid var(--border-subtle)',
-                            boxShadow: 'var(--shadow-lg)'
+                            boxShadow: 'var(--shadow-lg)',
+                            maxWidth: '480px',
+                            width: '100%',
+                            margin: '0 auto'
                         }}>
                             <div style={{ width: '100%', aspectRatio: '16/9', background: '#000' }}>
                                 <iframe
