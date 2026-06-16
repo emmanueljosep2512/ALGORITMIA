@@ -338,21 +338,33 @@ export default function MetaIntelligence() {
             <div className="tab-nav" style={{ marginBottom: '28px' }}>
                 <button
                     className={`tab-btn ${activeTab === 'reels' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('reels')}
+                    onClick={() => {
+                        setSearchQuery('');
+                        setErrorReels('');
+                        setActiveTab('reels');
+                    }}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
                     <Instagram size={14} /> Reels Analyzer
                 </button>
                 <button
                     className={`tab-btn ${activeTab === 'ads' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('ads')}
+                    onClick={() => {
+                        setSearchQuery('');
+                        setErrorReels('');
+                        setActiveTab('ads');
+                    }}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
                     <Facebook size={14} /> Ad Spy (Biblioteca)
                 </button>
                 <button
                     className={`tab-btn ${activeTab === 'copywriter' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('copywriter')}
+                    onClick={() => {
+                        setSearchQuery('');
+                        setErrorReels('');
+                        setActiveTab('copywriter');
+                    }}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
                     <Sparkles size={14} /> Cerebro Copywriter
