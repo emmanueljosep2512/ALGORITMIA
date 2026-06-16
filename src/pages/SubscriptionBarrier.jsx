@@ -167,30 +167,32 @@ const SubscriptionBarrier = () => {
                 </div>
             </div>
 
-            {/* MÓDULO DE SIMULACIÓN PARA BETA TESTING */}
-            <div className="beta-sim-panel">
-                <div className="sim-title">
-                    <ShieldCheck size={16} style={{ color: 'var(--accent-cyan)' }} />
-                    Panel de Simulación de Pago (Beta Developer Mode)
+            {/* MÓDULO DE SIMULACIÓN PARA BETA TESTING - SOLO VISIBLE EN DESARROLLO LOCAL */}
+            {import.meta.env.DEV && (
+                <div className="beta-sim-panel">
+                    <div className="sim-title">
+                        <ShieldCheck size={16} style={{ color: 'var(--accent-cyan)' }} />
+                        Panel de Simulación de Pago (Beta Developer Mode)
+                    </div>
+                    <p>Usa estos botones para saltarte la pasarela de PayPal temporalmente y cargar créditos a tu cuenta de prueba:</p>
+                    <div className="sim-actions">
+                        <button 
+                            onClick={() => handleSubscribeMock('Creador PRO', 150)} 
+                            disabled={simulating}
+                            className="sim-btn pro"
+                        >
+                            {simulating ? 'Procesando...' : 'Simular Pago: Creador PRO (150 Cr)'}
+                        </button>
+                        <button 
+                            onClick={() => handleSubscribeMock('Agencia Élite', 400)} 
+                            disabled={simulating}
+                            className="sim-btn elite"
+                        >
+                            {simulating ? 'Procesando...' : 'Simular Pago: Agencia Élite (400 Cr)'}
+                        </button>
+                    </div>
                 </div>
-                <p>Usa estos botones para saltarte la pasarela de PayPal temporalmente y cargar créditos a tu cuenta de prueba:</p>
-                <div className="sim-actions">
-                    <button 
-                        onClick={() => handleSubscribeMock('Creador PRO', 150)} 
-                        disabled={simulating}
-                        className="sim-btn pro"
-                    >
-                        {simulating ? 'Procesando...' : 'Simular Pago: Creador PRO (150 Cr)'}
-                    </button>
-                    <button 
-                        onClick={() => handleSubscribeMock('Agencia Élite', 400)} 
-                        disabled={simulating}
-                        className="sim-btn elite"
-                    >
-                        {simulating ? 'Procesando...' : 'Simular Pago: Agencia Élite (400 Cr)'}
-                    </button>
-                </div>
-            </div>
+            )}
 
             <div className="paywall-footer">
                 <button className="back-btn" onClick={() => logout()}>
