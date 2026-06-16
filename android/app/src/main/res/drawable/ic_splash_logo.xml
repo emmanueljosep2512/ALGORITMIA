@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="108dp"
+    android:viewportWidth="288"
+    android:viewportHeight="108">
+
+    <!-- Brain emoji circle background glow -->
+    <path
+        android:pathData="M54,54m-42,0a42,42 0,1 1,84 0a42,42 0,1 1,-84 0"
+        android:fillColor="#0d2a2e"
+        android:strokeColor="#00f3ff"
+        android:strokeWidth="1.5"/>
+
+    <!-- Brain icon (stylized) -->
+    <path
+        android:pathData="M54,30 C42,30 34,38 34,48 C34,52 36,56 39,59 C39,64 42,68 46,69 C46,71 48,72 50,72 L58,72 C60,72 62,71 62,69 C66,68 69,64 69,59 C72,56 74,52 74,48 C74,38 66,30 54,30Z"
+        android:fillColor="#00f3ff"
+        android:fillAlpha="0.15"/>
+
+    <!-- Brain left hemisphere -->
+    <path
+        android:pathData="M46,40 C40,40 36,44 36,49 C36,54 40,58 45,58 C45,62 48,65 52,65 L52,40Z"
+        android:fillColor="#00f3ff"
+        android:fillAlpha="0.8"/>
+
+    <!-- Brain right hemisphere -->
+    <path
+        android:pathData="M62,40 C68,40 72,44 72,49 C72,54 68,58 63,58 C63,62 60,65 56,65 L56,40Z"
+        android:fillColor="#7c3aed"
+        android:fillAlpha="0.8"/>
+
+    <!-- Center divider -->
+    <path
+        android:pathData="M54,38 L54,68"
+        android:strokeColor="#0f0f1a"
+        android:strokeWidth="2"/>
+
+    <!-- Synaptic dots -->
+    <path
+        android:pathData="M44,46m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"
+        android:fillColor="#0f0f1a"/>
+    <path
+        android:pathData="M64,46m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"
+        android:fillColor="#0f0f1a"/>
+    <path
+        android:pathData="M47,54m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"
+        android:fillColor="#0f0f1a"/>
+    <path
+        android:pathData="M61,54m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"
+        android:fillColor="#0f0f1a"/>
+
+    <!-- "ALGORITM" text -->
+    <path
+        android:pathData="M100,45 L100,63 L104,63 L104,57 L108,57 C112,57 115,54 115,51 C115,48 112,45 108,45Z M104,49 L108,49 C110,49 111,50 111,51 C111,52 110,53 108,53 L104,53Z"
+        android:fillColor="#ffffff"/>
+    <path
+        android:pathData="M118,45 L118,63 L122,63 L122,57 L124,57 L127,63 L132,63 L128,56.5 C130,55.5 131,53.5 131,51.5 C131,48 128.5,45 124.5,45Z M122,49 L124.5,49 C126.5,49 127.5,50 127.5,51.5 C127.5,53 126.5,54 124.5,54 L122,54Z"
+        android:fillColor="#ffffff"/>
+    <path
+        android:pathData="M136,45 L130,63 L134.5,63 L135.8,59 L142.2,59 L143.5,63 L148,63 L142,45Z M137,55.5 L139,49.5 L141,55.5Z"
+        android:fillColor="#ffffff"/>
+    <path
+        android:pathData="M150,45 L150,63 L154,63 L154,50.5 L159,63 L162,63 L167,50.5 L167,63 L171,63 L171,45 L166,45 L160.5,58.5 L155,45Z"
+        android:fillColor="#ffffff"/>
+    <path
+        android:pathData="M175,45 L175,63 L191,63 L191,59 L179,59 L179,56 L188,56 L188,52 L179,52 L179,49 L191,49 L191,45Z"
+        android:fillColor="#ffffff"/>
+
+    <!-- Dot separator -->
+    <path
+        android:pathData="M194,63 L194,45 L198,45 L198,63Z"
+        android:fillColor="#ffffff"
+        android:fillAlpha="0.3"/>
+
+    <!-- ".IA" in cyan gradient -->
+    <path
+        android:pathData="M200,45 L200,63 L204,63 L204,45Z"
+        android:fillColor="#00f3ff"/>
+    <path
+        android:pathData="M207,45 L207,63 L223,63 L223,59 L211,59 L211,45Z"
+        android:fillColor="#00f3ff"/>
+
+    <!-- Tagline -->
+    <path
+        android:pathData="M100,74 L220,74"
+        android:strokeColor="#00f3ff"
+        android:strokeWidth="0.5"
+        android:strokeAlpha="0.4"/>
+
+</vector>

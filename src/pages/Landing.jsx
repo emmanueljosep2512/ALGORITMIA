@@ -42,14 +42,14 @@ export default function Landing() {
                     {/* Floating Viral Hooks */}
                     <div className="floating-data-container">
                         <div className="floating-hook h1">
-                            <span className="hook-tag">OUTLIER</span>
+                            <span className="hook-tag">YT</span>
                             <span className="hook-val">x142</span>
                             <TrendingUp size={14} color="var(--accent-cyan)" />
                         </div>
                         <div className="floating-hook h2">
-                            <span className="hook-tag">HOT</span>
+                            <span className="hook-tag">REELS</span>
                             <span className="hook-val">89%</span>
-                            <Flame size={14} color="var(--accent-purple-light)" />
+                            <Flame size={14} color="#e1306c" />
                         </div>
                         <div className="floating-hook h3">
                             <span className="hook-tag">CPM</span>
@@ -65,15 +65,15 @@ export default function Landing() {
 
                     <div className="hero-badge" style={{ position: 'relative', zIndex: 2 }}>
                         <Zap size={14} />
-                        <span>LA INTELIGENCIA ARTIFICIAL QUE DOMINA YOUTUBE</span>
+                        <span>LA INTELIGENCIA ARTIFICIAL PARA CREADORES DE CONTENIDO</span>
                     </div>
                     <h1 className="hero-title" style={{ position: 'relative', zIndex: 2 }}>
-                        Escala tu Canal de YouTube <br />
-                        <span>Basado en DATOS</span>, No en Suerte.
+                        Domina YouTube, Instagram<br />
+                        <span>y Facebook</span> con IA y DATOS.
                     </h1>
                     <p className="hero-subtitle" style={{ position: 'relative', zIndex: 2 }}>
-                        Encuentra nichos sin competencia, predice tendencias antes que nadie <br />
-                        y calcula tu rentabilidad real con precisión quirúrgica.
+                        Encuentra nichos virales, analiza Reels, espía anuncios de Meta<br />
+                        y genera copies con IA que convierten. Todo en un solo lugar.
                     </p>
 
                     <div className="hero-actions" style={{ position: 'relative', zIndex: 2 }}>
@@ -155,21 +155,28 @@ export default function Landing() {
                             <Target size={24} />
                         </div>
                         <h3>Buscador de Nichos</h3>
-                        <p>Filtra por idioma, competencia y crecimiento para encontrar minas de oro digitales.</p>
+                        <p>Filtra por idioma, competencia y crecimiento para encontrar nichos virales en YouTube, Instagram y Facebook.</p>
                     </div>
                     <div className="feature-item-glass">
                         <div className="feature-icon-wrapper purple">
                             <TrendingUp size={24} />
                         </div>
-                        <h3>Análisis de Tendencias</h3>
-                        <p>Conexión directa con la red neuronal para detectar temas virales antes de que estallen.</p>
+                        <h3>Análisis Multi-Plataforma</h3>
+                        <p>Detecta tendencias virales en YouTube Shorts, Instagram Reels y Facebook antes de que estallen en tu nicho.</p>
                     </div>
                     <div className="feature-item-glass">
                         <div className="feature-icon-wrapper green">
                             <Globe size={24} />
                         </div>
                         <h3>Calculadora de CPM Real</h3>
-                        <p>Datos oficiales de monetización por país (EE.UU, España, LATAM) y vistas necesarias.</p>
+                        <p>Datos reales de monetización por país y plataforma. Calcula tu rentabilidad en YouTube y Meta Ads.</p>
+                    </div>
+                    <div className="feature-item-glass">
+                        <div className="feature-icon-wrapper" style={{ background: 'linear-gradient(135deg, rgba(225,48,108,0.15), rgba(131,58,180,0.15))', border: '1px solid rgba(225,48,108,0.2)' }}>
+                            <Brain size={24} style={{ color: '#e1306c' }} />
+                        </div>
+                        <h3>Meta Intelligence IA</h3>
+                        <p>Analiza Reels de Instagram, espía anuncios activos de Meta y genera copies con IA usando fórmulas AIDA y PAS.</p>
                     </div>
                 </section>
             </main>
