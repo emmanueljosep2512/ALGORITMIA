@@ -18,6 +18,11 @@ const ProtectedRoute = ({ children, allowUnsubscribed = false }) => {
                 localStorage.setItem('algoritmia_plan', 'ADMIN / ILIMITADO');
                 localStorage.setItem('algoritmia_credits', '99999');
                 localStorage.setItem('algoritmia_credits_total', '99999');
+                
+                // Dispatch events to notify Sidebar and other components instantly
+                window.dispatchEvent(new Event('storage'));
+                window.dispatchEvent(new Event('creditsUpdated'));
+                
                 setNeedsSubscription(false);
             } else {
                 if (!allowUnsubscribed) {

@@ -173,7 +173,7 @@ const SubscriptionBarrier = () => {
                     <ShieldCheck size={16} style={{ color: 'var(--accent-cyan)' }} />
                     Panel de Simulación de Pago (Beta Developer Mode)
                 </div>
-                <p>Usa estos botones para saltarte la pasarela de Stripe temporalmente y cargar créditos a tu cuenta de prueba:</p>
+                <p>Usa estos botones para saltarte la pasarela de PayPal temporalmente y cargar créditos a tu cuenta de prueba:</p>
                 <div className="sim-actions">
                     <button 
                         onClick={() => handleSubscribeMock('Creador PRO', 150)} 
