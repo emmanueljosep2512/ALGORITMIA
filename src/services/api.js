@@ -164,6 +164,17 @@ export async function searchMetaReels({ q = '', category = 'Todas' } = {}) {
 }
 
 /**
+ * Analizar un Reel de Meta por su URL
+ */
+export async function analyzeMetaReel(url) {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams({ url });
+    const res = await fetch(`${API_BASE}/api/meta/analyze-reel?${params}`, { headers });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || 'Error al analizar el Reel'}`);
+    return res.json();
+}
+
+/**
  * Buscar anuncios en la biblioteca de Meta
  */
 export async function fetchMetaAds({ q = '', category = 'Todas' } = {}) {

@@ -1,8 +1,121 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Instagram, Facebook, Search, Flame, TrendingUp, Cpu, Zap, Copy, Check, ExternalLink, Activity, Play, Heart, MessageSquare, Share2, Sparkles, AlertTriangle, Layers, FileText } from 'lucide-react';
-import { searchMetaReels, fetchMetaAds, generateMetaCopy, formatViews, timeAgo } from '../services/api';
+import { Instagram, Facebook, Search, Flame, TrendingUp, Cpu, Zap, Copy, Check, ExternalLink, Activity, Play, Heart, MessageSquare, Share2, Sparkles, AlertTriangle, Layers, FileText, Brain } from 'lucide-react';
+import { searchMetaReels, fetchMetaAds, generateMetaCopy, formatViews, timeAgo, analyzeMetaReel } from '../services/api';
 
 const NICHE_CATEGORIES = ['Todas', 'Tecnología', 'Finanzas', 'Salud / Fitness', 'Estilo de vida'];
+
+const getDefaultReelAnalysis = (reel) => {
+    const outlier = reel.outlierRatio || (1.5 + (reel.views ? (reel.likes % 5) : 3) * 2).toFixed(1);
+    return `### 📈 FACTORES DE ÉXITO DE ESTE REEL
+- **Intriga en el gancho:** El título "${reel.title}" apela directamente a una curiosidad no resuelta en los primeros 3 segundos.
+- **Relación de Outlier:** Este Reel rinde notablemente mejor que el promedio del canal, indicando que el nicho de ${reel.niche || 'General'} tiene una alta tracción actual.
+
+### 🎯 ÁNGULO Y AUDIO VIRAL
+- **Estructura visual rápida:** Uso de clips de 1.5 a 2 segundos para mantener la retención alta y evitar saltos.
+- **Llamado a la acción implícito:** Invita a guardar el video para verlo más tarde, lo cual dispara el algoritmo de Instagram.
+
+### 💡 ESTRUCTURA PARA REPLICAR (BAJO 60 SEG)
+| Estímulo Visual (Pantalla) | Narración / Audio (Voz en Off) |
+| --- | --- |
+| Texto llamativo sobre fondo contrastado | "Este es el mayor secreto que la gente de ${reel.theme || 'este nicho'} oculta..." |
+| Transición rápida de clips demostrativos | "Muchos creen que se necesita tiempo, pero la realidad es otra..." |
+| Captura de pantalla del método en acción | "Solo tienes que seguir estos tres pasos simples..." |
+| Botón animado de seguir y comentar | "Si quieres la guía completa, comenta la palabra INFO abajo." |`;
+};
+
+const renderReelAnalysisMarkdown = (text) => {
+    if (!text) return null;
+    const sections = text.split(/###\s+/);
+    return sections.map((sec, idx) => {
+        if (!sec.trim()) return null;
+        const lines = sec.split('\n');
+        const title = lines[0].trim();
+        const rest = lines.slice(1).join('\n').trim();
+
+        if (title.includes('FACTORES')) {
+            return (
+                <div key={idx} style={{
+                    background: 'rgba(78, 204, 163, 0.05)',
+                    border: '1px solid rgba(78, 204, 163, 0.2)',
+                    borderRadius: '16px',
+                    padding: '18px',
+                    marginBottom: '20px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-green)', fontWeight: '800', fontSize: '0.9rem', marginBottom: '8px' }}>
+                        <TrendingUp size={16} /> {title}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                        {rest.split('\n').map((l, i) => (
+                            <p key={i} style={{ marginBottom: '6px' }}>{l}</p>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        if (title.includes('ÁNGULO') || title.includes('AUDIO')) {
+            return (
+                <div key={idx} style={{
+                    background: 'rgba(225, 48, 108, 0.05)',
+                    border: '1px solid rgba(225, 48, 108, 0.2)',
+                    borderRadius: '16px',
+                    padding: '18px',
+                    marginBottom: '20px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#e1306c', fontWeight: '800', fontSize: '0.9rem', marginBottom: '8px' }}>
+                        <Zap size={16} /> {title}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                        {rest.split('\n').map((l, i) => (
+                            <p key={i} style={{ marginBottom: '6px' }}>{l}</p>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        if (title.includes('ESTRUCTURA')) {
+            const rows = rest.split('\n').filter(r => r.includes('|') && !r.includes('---'));
+            const tableBody = rows.slice(1).map(r => r.split('|').map(cell => cell.trim()).filter(Boolean));
+            return (
+                <div key={idx} style={{ marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-purple-light)', fontWeight: '800', fontSize: '0.9rem', marginBottom: '10px' }}>
+                        <Layers size={16} /> {title}
+                    </div>
+                    <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid var(--border-subtle)', background: 'rgba(0,0,0,0.2)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                            <thead>
+                                <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-subtle)' }}>
+                                    <th style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>Pantalla (Visual)</th>
+                                    <th style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>Audio (Voz en Off)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {tableBody.map((row, i) => (
+                                    <tr key={i} style={{ borderBottom: i < tableBody.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                                        <td style={{ padding: '10px 14px', color: 'var(--text-primary)', fontWeight: '500' }}>{row ? row[0] : ''}</td>
+                                        <td style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>{row ? row[1] : ''}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div key={idx} style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-cyan)', fontWeight: '800', fontSize: '0.9rem', marginBottom: '8px' }}>
+                    <FileText size={16} /> {title}
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                    {rest}
+                </div>
+            </div>
+        );
+    });
+};
 
 export default function MetaIntelligence() {
     const [activeTab, setActiveTab] = useState('reels'); // 'reels' | 'ads' | 'copywriter'
@@ -13,6 +126,7 @@ export default function MetaIntelligence() {
     const [reels, setReels] = useState([]);
     const [loadingReels, setLoadingReels] = useState(false);
     const [selectedReel, setSelectedReel] = useState(null);
+    const [errorReels, setErrorReels] = useState('');
 
     // Ads State
     const [ads, setAds] = useState([]);
@@ -29,11 +143,31 @@ export default function MetaIntelligence() {
     // Cargar Reels
     const loadReels = async () => {
         setLoadingReels(true);
+        setErrorReels('');
         try {
-            const data = await searchMetaReels({ q: searchQuery, category: selectedCategory });
-            setReels(data.reels || []);
+            const isUrl = searchQuery.trim().startsWith('http') || 
+                          searchQuery.includes('instagram.com') || 
+                          searchQuery.includes('facebook.com');
+
+            if (isUrl) {
+                const data = await analyzeMetaReel(searchQuery.trim());
+                if (data && data.reel) {
+                    const newReel = {
+                        ...data.reel,
+                        analysis: data.analysis
+                    };
+                    setReels([newReel]);
+                    setSelectedReel(newReel);
+                } else {
+                    setErrorReels('No se pudo analizar este enlace. Asegúrate de que sea un enlace público de Instagram Reel.');
+                }
+            } else {
+                const data = await searchMetaReels({ q: searchQuery, category: selectedCategory });
+                setReels(data.reels || []);
+            }
         } catch (e) {
             console.error('Error loading reels:', e);
+            setErrorReels('Error al analizar este Reel. Asegúrate de que el enlace sea de un Reel público de Instagram.');
         }
         setLoadingReels(false);
     };
@@ -260,7 +394,21 @@ export default function MetaIntelligence() {
 
             {/* TAB: REELS ANALYZER */}
             {activeTab === 'reels' && (
-                loadingReels ? (
+                <>
+                    {errorReels && (
+                        <div style={{
+                            background: 'rgba(255,80,80,0.1)',
+                            border: '1px solid rgba(255,80,80,0.25)',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            color: '#ff5050',
+                            fontSize: '0.85rem',
+                            marginBottom: '20px'
+                        }}>
+                            ⚠️ {errorReels}
+                        </div>
+                    )}
+                    {loadingReels ? (
                     <div className="niches-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
                         {[1, 2, 3, 4].map(i => (
                             <div key={i} className="stat-card skeleton" style={{ height: '380px', borderRadius: '16px' }} />
@@ -402,6 +550,8 @@ export default function MetaIntelligence() {
                         ))}
                     </div>
                 )
+            }
+                </>
             )}
 
             {/* TAB: AD SPY */}
@@ -620,29 +770,11 @@ export default function MetaIntelligence() {
             {selectedReel && (
                 <div className="modal-overlay" onClick={() => setSelectedReel(null)}>
                     <div
-                        className="modal-container"
+                        className="reel-modal-container"
                         onClick={(e) => e.stopPropagation()}
-                        style={{
-                            maxWidth: '340px',
-                            height: '90vh',
-                            maxHeight: '680px',
-                            background: '#000',
-                            borderRadius: '24px',
-                            position: 'relative',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            overflow: 'hidden',
-                            border: '1.5px solid rgba(255,255,255,0.15)'
-                        }}
                     >
-                        {/* Video Mockup (Unsplash con animación de zoom sutil) */}
-                        <div style={{
-                            flex: 1,
-                            backgroundImage: `url(${selectedReel.thumbnail})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            position: 'relative'
-                        }}>
+                        {/* LEFT: Video Mockup (Unsplash con animación de zoom sutil) */}
+                        <div className="reel-modal-player" style={{ backgroundImage: `url(${selectedReel.thumbnail})` }}>
                             {/* Gradiente de fondo del Reel */}
                             <div style={{
                                 position: 'absolute',
@@ -651,9 +783,10 @@ export default function MetaIntelligence() {
                                 zIndex: 1
                             }} />
 
-                            {/* Botón de cerrar modal en el Reel */}
+                            {/* Botón de cerrar modal en el Reel (Solo visible en móviles si el panel derecho está oculto) */}
                             <button
                                 onClick={() => setSelectedReel(null)}
+                                className="modal-close-mobile-only"
                                 style={{
                                     position: 'absolute',
                                     top: '16px',
@@ -740,6 +873,55 @@ export default function MetaIntelligence() {
                                 <p style={{ fontSize: '0.75rem', lineHeight: '1.4', margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
                                     {selectedReel.title}
                                 </p>
+                            </div>
+                        </div>
+
+                        {/* RIGHT: AI ANALYSIS PANEL */}
+                        <div className="reel-modal-analysis">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Brain size={20} style={{ color: 'var(--accent-purple-light)' }} />
+                                    <h2 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'white', margin: 0 }}>Cerebro IA — Diagnóstico de Reel</h2>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedReel(null)}
+                                    style={{
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        color: '#fff',
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '50%',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: '800'
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            {/* Outlier Ratio, VPH & Momentum Badges */}
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                                <div style={{ background: 'rgba(0, 229, 160, 0.08)', border: '1px solid rgba(0, 229, 160, 0.2)', borderRadius: '10px', padding: '6px 10px' }}>
+                                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>OUTLIER RATIO</div>
+                                    <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--accent-green)' }}>x{selectedReel.outlierRatio || (1.5 + (selectedReel.likes % 5) * 2).toFixed(1)}</div>
+                                </div>
+                                <div style={{ background: 'rgba(0, 212, 255, 0.08)', border: '1px solid rgba(0, 212, 255, 0.2)', borderRadius: '10px', padding: '6px 10px' }}>
+                                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>VELOCIDAD (VPH)</div>
+                                    <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--accent-cyan)' }}>{selectedReel.vph ? formatViews(selectedReel.vph) : 'N/A'}/h</div>
+                                </div>
+                                <div style={{ background: 'rgba(225, 48, 108, 0.08)', border: '1px solid rgba(225, 48, 108, 0.2)', borderRadius: '10px', padding: '6px 10px' }}>
+                                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>MOMENTUM SCORE</div>
+                                    <div style={{ fontSize: '1rem', fontWeight: '800', color: '#e1306c' }}>{selectedReel.momentumScore}%</div>
+                                </div>
+                            </div>
+
+                            {/* Markdown render of AI Analysis */}
+                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+                                {renderReelAnalysisMarkdown(selectedReel.analysis || getDefaultReelAnalysis(selectedReel))}
                             </div>
                         </div>
                     </div>
