@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, NavLink } from 'react-router-dom';
+import { LayoutDashboard, Search, Compass, Sparkles, Instagram, LogOut } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import VideoSearch from './pages/VideoSearch';
@@ -11,7 +12,33 @@ import ProtectedRoute from './components/ProtectedRoute';
 import VideoAnalyzer from './pages/VideoAnalyzer';
 import MetaIntelligence from './pages/MetaIntelligence';
 import SubscriptionBarrier from './pages/SubscriptionBarrier';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+function MobileNav() {
+    const { logout } = useAuth();
+    return (
+        <nav className="mobile-nav" style={{ display: 'none' }}>
+            <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>
+                <LayoutDashboard size={20} /><span>Inicio</span>
+            </NavLink>
+            <NavLink to="/buscar" className={({ isActive }) => isActive ? 'active' : ''}>
+                <Search size={20} /><span>Buscar</span>
+            </NavLink>
+            <NavLink to="/nichos" className={({ isActive }) => isActive ? 'active' : ''}>
+                <Compass size={20} /><span>Nichos</span>
+            </NavLink>
+            <NavLink to="/analizador" className={({ isActive }) => isActive ? 'active' : ''}>
+                <Sparkles size={20} /><span>Analizar</span>
+            </NavLink>
+            <NavLink to="/meta" className={({ isActive }) => isActive ? 'active' : ''}>
+                <Instagram size={20} style={{ color: '#e1306c' }} /><span>Meta</span>
+            </NavLink>
+            <button onClick={() => logout()}>
+                <LogOut size={20} /><span>Salir</span>
+            </button>
+        </nav>
+    );
+}
 
 function AppContent({ setPlayingVideo }) {
     const location = useLocation();
@@ -74,9 +101,11 @@ function AppContent({ setPlayingVideo }) {
                     />
                 </Routes>
             </div>
+            {!isPublic && <MobileNav />}
         </div>
     );
 }
+
 
 export default function App() {
     const [playingVideo, setPlayingVideo] = useState(null);

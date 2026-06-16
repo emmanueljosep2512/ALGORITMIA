@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Search, Compass, Flame, TrendingUp, Cpu, Zap, WifiOff, Sparkles, Instagram, Smartphone } from 'lucide-react';
+import { LayoutDashboard, Search, Compass, Flame, TrendingUp, Cpu, Zap, WifiOff, Sparkles, Instagram } from 'lucide-react';
 import { checkHealth } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -139,46 +139,6 @@ export default function Sidebar() {
                         <Zap size={10} fill="currentColor" /> Recargar
                     </a>
                 </div>
-
-                <a
-                    href="/algoritmia.apk"
-                    download="algoritmia.apk"
-                    className="sidebar-download-apk-btn"
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                        width: '100%',
-                        marginTop: 12,
-                        padding: '10px',
-                        background: 'linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(0, 102, 255, 0.05) 100%)',
-                        border: '1px solid rgba(0, 243, 255, 0.15)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--accent-cyan)',
-                        fontSize: '0.8rem',
-                        fontWeight: '600',
-                        textDecoration: 'none',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        boxShadow: '0 4px 12px rgba(0, 243, 255, 0.05)',
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 243, 255, 0.15) 0%, rgba(0, 102, 255, 0.15) 100%)';
-                        e.currentTarget.style.borderColor = 'rgba(0, 243, 255, 0.4)';
-                        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 243, 255, 0.15), inset 0 0 12px rgba(0, 243, 255, 0.1)';
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(0, 102, 255, 0.05) 100%)';
-                        e.currentTarget.style.borderColor = 'rgba(0, 243, 255, 0.15)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 243, 255, 0.05)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <Smartphone size={14} className="nav-icon" />
-                    Descargar App (APK)
-                </a>
 
                 <button
                     onClick={() => logout()}
