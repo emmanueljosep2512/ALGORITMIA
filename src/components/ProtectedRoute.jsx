@@ -25,6 +25,17 @@ const ProtectedRoute = ({ children, allowUnsubscribed = false }) => {
                 
                 setNeedsSubscription(false);
             } else {
+                // Si no es admin pero el plan guardado localmente es ADMIN o tiene créditos de admin, limpiarlo inmediatamente
+                const currentPlan = localStorage.getItem('algoritmia_plan');
+                if (currentPlan === 'ADMIN / ILIMITADO' || localStorage.getItem('algoritmia_credits') === '99999') {
+                    localStorage.removeItem('algoritmia_subscribed');
+                    localStorage.removeItem('algoritmia_plan');
+                    localStorage.removeItem('algoritmia_credits');
+                    localStorage.removeItem('algoritmia_credits_total');
+                    window.dispatchEvent(new Event('storage'));
+                    window.dispatchEvent(new Event('creditsUpdated'));
+                }
+
                 if (!allowUnsubscribed) {
                     const isSubscribed = localStorage.getItem('algoritmia_subscribed') === 'true';
                     if (!isSubscribed) {

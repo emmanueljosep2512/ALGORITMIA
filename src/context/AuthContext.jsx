@@ -50,7 +50,15 @@ export const AuthProvider = ({ children }) => {
         return signInWithPopup(auth, provider);
     };
 
-    const logout = () => signOut(auth);
+    const logout = () => {
+        localStorage.removeItem('algoritmia_subscribed');
+        localStorage.removeItem('algoritmia_plan');
+        localStorage.removeItem('algoritmia_credits');
+        localStorage.removeItem('algoritmia_credits_total');
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('creditsUpdated'));
+        return signOut(auth);
+    };
 
     return (
         <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithMicrosoft, logout }}>
