@@ -18,7 +18,34 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, '.env') });
 
 const app = express();
-app.use(cors());
+
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:3848',
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Permitir peticiones sin origen (como herramientas de prueba o llamadas internas)
+        if (!origin) return callback(null, true);
+        
+        // Permitir localhost, subdominios de vercel.app o subdominios de pages.dev (Cloudflare)
+        const isAllowed = allowedOrigins.includes(origin) || 
+                          origin.endsWith('.vercel.app') || 
+                          origin.endsWith('.pages.dev') || 
+                          /^https?:\/\/localhost:\d+$/.test(origin);
+                          
+        if (!isAllowed) {
+            console.warn(`🚨 Intento de petición bloqueado por CORS desde origen: ${origin}`);
+            const msg = 'La política CORS de este servidor no permite peticiones desde el origen especificado.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true
+}));
+
 app.use(express.json());
 
 const parser = new Parser({
@@ -49,8 +76,10 @@ try {
 
 // Middleware de Autenticación
 const checkAuth = async (req, res, next) => {
-    // Si no está configurado el service account, saltamos la validación (Modo Dev)
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT) return next();
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+        console.warn("⚠️ FIREBASE_SERVICE_ACCOUNT no configurada. El servidor opera en modo abierto temporalmente.");
+        return next();
+    }
 
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
@@ -493,6 +522,358 @@ Before generating the final response, write your step-by-step reasoning inside <
     } catch (err) {
         console.error('Error in analyze-video:', err.message);
         res.status(500).json({ error: err.message });
+    }
+});
+
+// ═══════════════════════════════════════════════════
+// METRICS ENGINE & DATA SIMULATION: META (FB & IG)
+// ═══════════════════════════════════════════════════
+
+const MOCK_REELS_DATA = [
+    {
+        title: "3 herramientas de IA que parecen ilegales y te ahorran horas",
+        channel: "tech_mindset",
+        views: 284000,
+        likes: 18400,
+        comments: 342,
+        shares: 9800,
+        duration: "0:28",
+        niche: "Tecnología",
+        theme: "IA / Productividad",
+        thumbnail: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80"
+    },
+    {
+        title: "Cómo facturar tus primeros $1,000 online sin inversión previa",
+        channel: "guille_negocios",
+        views: 450000,
+        likes: 31000,
+        comments: 890,
+        shares: 14500,
+        duration: "0:45",
+        niche: "Finanzas",
+        theme: "Emprendimiento",
+        thumbnail: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&q=80"
+    },
+    {
+        title: "Esta es la cruda realidad de vivir en una Tiny House 🏠",
+        channel: "nomada_digital",
+        views: 125000,
+        likes: 7200,
+        comments: 198,
+        shares: 2400,
+        duration: "0:59",
+        niche: "Estilo de vida",
+        theme: "Vivienda / Viajes",
+        thumbnail: "https://images.unsplash.com/photo-1525186402429-b4ff38bedec6?w=400&q=80"
+    },
+    {
+        title: "El gran secreto de Costco que las marcas no quieren que sepas",
+        channel: "ahorro_inteligente",
+        views: 890000,
+        likes: 64000,
+        comments: 1120,
+        shares: 32400,
+        duration: "0:35",
+        niche: "Finanzas",
+        theme: "Hacks de Ahorro",
+        thumbnail: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80"
+    },
+    {
+        title: "Rutina express de 7 minutos en casa para marcar abdominales",
+        channel: "fitness_rutinas",
+        views: 180000,
+        likes: 11000,
+        comments: 145,
+        shares: 6100,
+        duration: "0:40",
+        niche: "Salud / Fitness",
+        theme: "Ejercicios",
+        thumbnail: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&q=80"
+    },
+    {
+        title: "El postre de chocolate más saludable del mundo (sin azúcar)",
+        channel: "healthy_recetas",
+        views: 310000,
+        likes: 21000,
+        comments: 412,
+        shares: 18900,
+        duration: "0:50",
+        niche: "Salud / Fitness",
+        theme: "Recetas",
+        thumbnail: "https://images.unsplash.com/photo-1541832676-9b763b0239ab?w=400&q=80"
+    },
+    {
+        title: "Truco de fotografía móvil que cambiará tus fotos para siempre 📸",
+        channel: "creativo_visual",
+        views: 95000,
+        likes: 5800,
+        comments: 89,
+        shares: 1900,
+        duration: "0:15",
+        niche: "Tecnología",
+        theme: "Fotografía",
+        thumbnail: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&q=80"
+    },
+    {
+        title: "Mi experiencia real usando la visa de nómada digital en Portugal",
+        channel: "viajero_pro",
+        views: 154000,
+        likes: 9100,
+        comments: 310,
+        shares: 4800,
+        duration: "0:55",
+        niche: "Estilo de vida",
+        theme: "Viajes / Trabajo",
+        thumbnail: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80"
+    }
+];
+
+const MOCK_ADS_DATA = [
+    {
+        id: "ad_1",
+        title: "Curso Avanzado de IA y Automatización con Python",
+        status: "Activo",
+        platform: "Instagram + Facebook",
+        durationDays: 34,
+        creativeUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500&q=80",
+        copy: "🚀 ¿Sigues haciendo tareas repetitivas? Deja que la Inteligencia Artificial trabaje por ti. Aprende a crear automatizaciones, agentes inteligentes y flujos de trabajo en Python en tiempo récord. Accede hoy con 50% de descuento de prelanzamiento.",
+        cta: "Registrarse",
+        niche: "Tecnología",
+        targeting: "Emprendedores, Desarrolladores, Creadores (24-45 años)"
+    },
+    {
+        id: "ad_2",
+        title: "Plantilla Financiera Inteligente 2026 - Control 360",
+        status: "Activo",
+        platform: "Instagram + Facebook",
+        durationDays: 18,
+        creativeUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&q=80",
+        copy: "📊 Deja de preguntarte a dónde se va tu dinero a fin de mes. Nuestra plantilla automatizada de Google Sheets rastrea tus ingresos, gastos, inversiones y proyecciones de ahorro en un solo panel interactivo y visualmente impecable. ¡Haz clic para descargar gratis!",
+        cta: "Descargar",
+        niche: "Finanzas",
+        targeting: "Jóvenes Profesionales, Interesados en Ahorro e Inversión (20-38 años)"
+    },
+    {
+        id: "ad_3",
+        title: "Botella de Hidratación Térmica Inteligente con Filtro UV",
+        status: "Activo",
+        platform: "Instagram + Facebook",
+        durationDays: 45,
+        creativeUrl: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&q=80",
+        copy: "💧 Agua pura y fría en cualquier parte del mundo. Esta botella térmica de acero inoxidable no solo mantiene la temperatura por 24 horas, sino que elimina el 99.9% de bacterias del agua en 60 segundos gracias a su tapa con purificador UV integrado. Envío gratuito hoy.",
+        cta: "Comprar ahora",
+        niche: "Salud / Fitness",
+        targeting: "Interesados en Senderismo, Fitness, Ecología, Vida Saludable (18-40 años)"
+    },
+    {
+        id: "ad_4",
+        title: "Agencia de Viajes Boutique - Escapada a Tailandia",
+        status: "Activo",
+        platform: "Instagram + Facebook",
+        durationDays: 7,
+        creativeUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&q=80",
+        copy: "🌴 ¿Listo para tu próxima aventura? Diseñamos tu itinerario de 12 días por Tailandia con hoteles boutique de 5 estrellas, tours privados en templos sagrados, visitas a santuarios de elefantes y vuelos incluidos. Cupos súper limitados para la temporada de otoño.",
+        cta: "Ver más",
+        niche: "Estilo de vida",
+        targeting: "Viajeros Frecuentes, Parejas, Amantes del Turismo Exótico (25-50 años)"
+    }
+];
+
+// Endpoints Meta Intelligence
+app.get('/api/meta/search', checkAuth, (req, res) => {
+    try {
+        const { q = '', category = 'Todas' } = req.query;
+        let reels = [...MOCK_REELS_DATA];
+
+        if (category !== 'Todas') {
+            reels = reels.filter(r => r.niche.toLowerCase() === category.toLowerCase());
+        }
+
+        if (q) {
+            const query = q.toLowerCase();
+            reels = reels.filter(r => 
+                r.title.toLowerCase().includes(query) || 
+                r.channel.toLowerCase().includes(query) ||
+                r.theme.toLowerCase().includes(query)
+            );
+        }
+
+        // Si no hay resultados de la consulta, autogenerar un mock dinámico para dar excelente UX
+        if (reels.length === 0 && q) {
+            reels = [
+                {
+                    title: `El secreto oculto sobre "${q}" que nadie te cuenta`,
+                    channel: `meta_creator_${q.replace(/\s+/g, '').toLowerCase().slice(0, 10)}`,
+                    views: 150000 + Math.floor(Math.random() * 300000),
+                    likes: 12000 + Math.floor(Math.random() * 20000),
+                    comments: 200 + Math.floor(Math.random() * 500),
+                    shares: 4000 + Math.floor(Math.random() * 8000),
+                    duration: "0:30",
+                    niche: category !== 'Todas' ? category : 'General',
+                    theme: q,
+                    thumbnail: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80"
+                }
+            ];
+        }
+
+        // Enriquecer con cálculo de Momentum adaptado a Reels
+        const enrichedReels = reels.map((r, i) => {
+            const shares = r.shares || Math.round(r.likes * 0.35);
+            // En Reels, los compartidos importan más que los likes
+            const engRate = ((r.likes + r.comments + shares) / r.views) * 100;
+            const hoursAgo = 12 + (i * 8); // Simular antigüedad
+            
+            const vph = r.views / hoursAgo;
+            const vphScore = Math.min(100, (vph / 800) * 100);
+            
+            const shareScore = Math.min(100, (shares / 3000) * 100);
+            const engScore = Math.min(100, (engRate / 8) * 100);
+            
+            // Fórmula adaptada a Reels
+            const momentum = Math.round(vphScore * 0.35 + shareScore * 0.35 + engScore * 0.3);
+            
+            let trending = 'normal';
+            if (momentum >= 80) trending = 'fire';
+            else if (momentum >= 60) trending = 'hot';
+            else if (momentum >= 40) trending = 'rising';
+
+            return {
+                id: `reel_${i + 1}_${r.channel}`,
+                title: r.title,
+                channel: r.channel,
+                channelAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(r.channel)}`,
+                views: r.views,
+                likes: r.likes,
+                comments: r.comments,
+                shares,
+                duration: r.duration,
+                publishedAt: new Date(Date.now() - (hoursAgo * 60 * 60 * 1000)).toISOString(),
+                vph: Math.round(vph),
+                engagementRate: Math.round(engRate * 100) / 100,
+                momentumScore: Math.min(99, Math.max(1, momentum)),
+                trending,
+                thumbnail: r.thumbnail
+            };
+        });
+
+        enrichedReels.sort((a, b) => b.momentumScore - a.momentumScore);
+        res.json({ reels: enrichedReels, meta: { count: enrichedReels.length } });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/meta/ad-spy', checkAuth, (req, res) => {
+    try {
+        const { q = '', category = 'Todas' } = req.query;
+        let ads = [...MOCK_ADS_DATA];
+
+        if (category !== 'Todas') {
+            ads = ads.filter(a => a.niche.toLowerCase() === category.toLowerCase());
+        }
+
+        if (q) {
+            const query = q.toLowerCase();
+            ads = ads.filter(a => 
+                a.title.toLowerCase().includes(query) || 
+                a.copy.toLowerCase().includes(query)
+            );
+        }
+
+        if (ads.length === 0 && q) {
+            ads = [
+                {
+                    id: `ad_mock_${Date.now()}`,
+                    title: `Anuncio Ganador sobre "${q}"`,
+                    status: "Activo",
+                    platform: "Instagram + Facebook",
+                    durationDays: 14,
+                    creativeUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&q=80",
+                    copy: `🔥 ¿Quieres resolver tu problema con ${q}? Hemos creado la solución definitiva. Haz clic hoy y descubre cómo automatizar tu negocio y ahorrar hasta 15 horas semanales con nuestro nuevo sistema.`,
+                    cta: "Ver más",
+                    niche: category !== 'Todas' ? category : 'General',
+                    targeting: "Emprendedores e interesados en el sector (18-45 años)"
+                }
+            ];
+        }
+
+        res.json({ ads, meta: { count: ads.length } });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/meta/ai-copywriter', checkAuth, async (req, res) => {
+    try {
+        const { niche, platform = 'Instagram', type = 'Reel Script' } = req.body;
+        if (!niche) return res.status(400).json({ error: 'Falta ingresar el nicho/idea' });
+
+        if (!process.env.GROQ_API_KEY) {
+            return res.json({ 
+                content: `### 🎯 GANCHO DE RETENCIÓN (3 Segundos)
+- **Visual**: Muestra texto en pantalla grande con degradado: *"El secreto de ${niche} que tu competencia odiaría que supieras"*.
+- **Voz en Off**: "Si sigues haciendo esto para ${niche}, estás tirando dinero..."
+
+### ⚡ ESTRUCTURA DEL GUION (Reel/Video Corto)
+| Estímulo Visual (Pantalla) | Narración / Audio (Voz en Off) |
+| --- | --- |
+| Gancho de 3 segundos. Zoom rápido a tu cara. | "Esto es lo único que necesitas para dominar ${niche} hoy." |
+| Mostrar gráfico en pantalla de rendimiento. | "Olvídate de las técnicas viejas. La clave real es la automatización inteligente." |
+| Grabación de pantalla del software. | "Simplemente dejas que el sistema haga el análisis de datos por ti." |
+| Llamado a la acción (CTA) con texto flotante. | "Comenta la palabra 'CEREBRO' abajo y te envío la herramienta gratis al privado." |
+
+### ✍️ COPY PERSUASIVO (Para la descripción)
+💥 **La verdad que nadie te dice sobre ${niche}...**
+
+La mayoría de la gente pasa 10 horas semanales en esto, pero los profesionales lo resuelven en 5 minutos usando automatización.
+
+Aquí tienes el plan de acción:
+1️⃣ Define tu objetivo clave.
+2️⃣ Utiliza el Cerebro AlgoritmIA.
+3️⃣ Automatiza y escala.
+
+👉 ¿Quieres probar la herramienta? Comenta **'CEREBRO'** abajo y te enviamos el link de acceso directamente por DM.
+
+#${niche.replace(/\s+/g, '')} #inteligenciaartificial #emprendedores #negociosonline #creadoresdecontenido` 
+            });
+        }
+
+        const prompt = `
+# CONTEXT
+You are the elite AI Copywriter for AlgoritmIA, a premium SaaS for creators and advertisers on Meta (Instagram & Facebook). Your mission is to write viral content assets for the specified niche: "${niche}".
+
+# OBJECTIVE
+Generate a highly engaging, high-retention content package optimized for:
+- Platform: ${platform}
+- Asset Type: ${type}
+
+# RESPONSE FORMAT (MARKDOWN)
+Structure the output exactly as follows:
+### 🎯 GANCHO DE RETENCIÓN (3 Segundos)
+- **Visual**: [Describe the exact visual frame, text on screen, and movement for the first 3 seconds of the video]
+- **Voz en Off / Texto**: "[The exact spoken hook sentence or text read aloud, engineered for high curiosity]"
+
+### ⚡ ESTRUCTURA DEL GUION (Reel/Video Corto)
+Create a table with columns: "Estímulo Visual (Pantalla)" and "Narración / Audio (Voz en Off)".
+Provide 4 chronological scenes (Hook, Problem, Solution, Call to Action). Ensure it is highly actionable and viral.
+
+### ✍️ COPY PERSUASIVO (Para la descripción)
+Write a professional, highly engaging caption for the post using copywriting frameworks like AIDA (Attention, Interest, Desire, Action) or PAS (Problem, Agitate, Solve). Include formatting (bolding, lists), interactive call-to-actions (e.g. "comenta la palabra X"), relevant emojis, and 5 highly targeted hashtags.
+
+# STYLE
+Professional, sharp, persuasive, and in native Spanish (es-ES). No fluff, no introductory greetings.
+`;
+
+        const chatCompletion = await groq.chat.completions.create({
+            messages: [{ role: 'user', content: prompt }],
+            model: 'llama-3.3-70b-versatile',
+        });
+
+        const content = chatCompletion.choices[0]?.message?.content || 'No se pudo generar el copy.';
+        res.json({ content });
+    } catch (err) {
+        console.error('Error in Meta Copywriter:', err.message);
+        res.status(500).json({ error: 'Error al generar copy con IA.' });
     }
 });
 

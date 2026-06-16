@@ -6,7 +6,9 @@
 
 import { getAuth } from 'firebase/auth';
 
-const API_BASE = 'https://algoritmia-pi.vercel.app';
+const API_BASE = window.location.hostname === 'localhost'
+    ? 'http://localhost:3848'
+    : 'https://server-rose-theta-28.vercel.app';
 
 // Mapas de categorías de YouTube a nombres legibles
 const CATEGORY_MAP = {
@@ -148,6 +150,42 @@ function enrichVideos(videos, meta) {
         })),
         meta,
     };
+}
+
+/**
+ * Buscar Reels populares de Meta
+ */
+export async function searchMetaReels({ q = '', category = 'Todas' } = {}) {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams({ q, category });
+    const res = await fetch(`${API_BASE}/api/meta/search?${params}`, { headers });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || res.statusText}`);
+    return res.json();
+}
+
+/**
+ * Buscar anuncios en la biblioteca de Meta
+ */
+export async function fetchMetaAds({ q = '', category = 'Todas' } = {}) {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams({ q, category });
+    const res = await fetch(`${API_BASE}/api/meta/ad-spy?${params}`, { headers });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || res.statusText}`);
+    return res.json();
+}
+
+/**
+ * Generar copys y guiones para Meta con IA
+ */
+export async function generateMetaCopy({ niche, platform = 'Instagram', type = 'Reel Script' }) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/meta/ai-copywriter`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ niche, platform, type })
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || 'Error al generar'}`);
+    return res.json();
 }
 
 // ═══════════════════════════════════════════════════

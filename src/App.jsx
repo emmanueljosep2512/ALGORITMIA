@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import VideoModal from './components/VideoModal';
 import ProtectedRoute from './components/ProtectedRoute';
 import VideoAnalyzer from './pages/VideoAnalyzer';
+import MetaIntelligence from './pages/MetaIntelligence';
 import SubscriptionBarrier from './pages/SubscriptionBarrier';
 import { AuthProvider } from './context/AuthContext';
 
@@ -60,6 +61,14 @@ function AppContent({ setPlayingVideo }) {
                         element={
                             <ProtectedRoute>
                                 <VideoAnalyzer />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/meta"
+                        element={
+                            <ProtectedRoute>
+                                <MetaIntelligence />
                             </ProtectedRoute>
                         }
                     />

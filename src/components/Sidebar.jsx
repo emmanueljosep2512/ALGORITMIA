@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Search, Compass, Flame, TrendingUp, Cpu, Zap, WifiOff, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Search, Compass, Flame, TrendingUp, Cpu, Zap, WifiOff, Sparkles, Instagram } from 'lucide-react';
 import { checkHealth } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -84,6 +84,15 @@ export default function Sidebar() {
                 >
                     <Flame className="nav-icon" />
                     Tendencias
+                </NavLink>
+
+                <div className="nav-section-label" style={{ marginTop: 16 }}>Meta Intelligence</div>
+                <NavLink
+                    to="/meta"
+                    className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+                >
+                    <Instagram className="nav-icon" style={{ color: '#e1306c' }} />
+                    IG & FB Intelligence
                 </NavLink>
             </nav>
 

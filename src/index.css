@@ -95,19 +95,19 @@ h4 {
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
 }
 
 h2 {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
 }
 
 h3 {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
 }
 
 h4 {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 /* ===================== LAYOUT ===================== */
@@ -128,7 +128,7 @@ h4 {
 .page-content {
   flex: 1;
   overflow-y: auto;
-  padding: 28px 32px;
+  padding: 20px 24px;
 }
 
 .page-content::-webkit-scrollbar {
@@ -140,8 +140,12 @@ h4 {
 }
 
 .page-content::-webkit-scrollbar-thumb {
-  background: var(--border-accent);
+  background: rgba(123, 47, 255, 0.4);
   border-radius: 3px;
+}
+
+.page-content::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-purple-light);
 }
 
 /* ===================== SIDEBAR ===================== */
@@ -156,14 +160,20 @@ h4 {
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  padding: 20px 0;
+  padding: 16px 0;
   z-index: 100;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .sidebar-logo {
-  padding: 24px 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .logo-link {
@@ -209,12 +219,12 @@ h4 {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s ease;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   font-weight: 500;
   text-decoration: none;
   margin-bottom: 2px;
@@ -256,16 +266,16 @@ h4 {
 }
 
 .sidebar-footer {
-  padding: 16px 12px 0;
+  padding: 12px 12px 16px;
   border-top: 1px solid var(--border-subtle);
-  margin-top: 8px;
+  margin-top: auto;
 }
 
 .plan-badge {
   background: rgba(123, 47, 255, 0.1);
   border: 1px solid var(--border-accent);
   border-radius: var(--radius-md);
-  padding: 12px;
+  padding: 8px 10px;
 }
 
 .plan-badge-label {
@@ -2036,8 +2046,8 @@ h4 {
   background: var(--bg-card);
   border: 1px solid var(--border-accent);
   border-radius: var(--radius-xl);
-  padding: 24px;
-  margin-bottom: 32px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
   position: relative;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), var(--shadow-glow-purple);
@@ -2055,7 +2065,7 @@ h4 {
 }
 
 .evaluator-header {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .evaluator-icon {
@@ -2082,7 +2092,7 @@ h4 {
 .evaluator-body {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
-  gap: 32px;
+  gap: 20px;
 }
 
 @media (max-width: 900px) {
@@ -2105,12 +2115,12 @@ h4 {
 
 .eval-input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: #fff;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   outline: none;
   transition: all 0.2s;
 }
@@ -2122,24 +2132,81 @@ h4 {
 
 .eval-select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: #fff;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   cursor: pointer;
   outline: none;
 }
 
+.eval-metric-box {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  height: 36px;
+}
+
+.eval-metric-box.active-green {
+  background: rgba(0, 229, 160, 0.05);
+  border: 1px solid rgba(0, 229, 160, 0.25);
+  color: var(--accent-green);
+  font-weight: 600;
+  box-shadow: 0 0 15px rgba(0, 229, 160, 0.08);
+}
+
+.eval-metric-box.active-cyan {
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  color: var(--accent-cyan);
+  font-weight: 600;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.08);
+}
+
+.eval-metric-box.active-yellow {
+  background: rgba(255, 184, 0, 0.05);
+  border: 1px solid rgba(255, 184, 0, 0.25);
+  color: var(--accent-yellow);
+  font-weight: 600;
+  box-shadow: 0 0 15px rgba(255, 184, 0, 0.08);
+}
+
+.eval-metric-box.active-red {
+  background: rgba(255, 59, 92, 0.05);
+  border: 1px solid rgba(255, 59, 92, 0.25);
+  color: var(--accent-red);
+  font-weight: 600;
+  box-shadow: 0 0 15px rgba(255, 59, 92, 0.08);
+}
+
+.eval-metric-box.calculating {
+  background: rgba(123, 47, 255, 0.04);
+  border: 1px dashed rgba(123, 47, 255, 0.3);
+  color: var(--accent-purple-light);
+  font-weight: 500;
+}
+
+
 .btn-calculate {
-  margin-top: 8px;
-  padding: 14px;
+  margin-top: 4px;
+  padding: 10px 14px;
   background: linear-gradient(135deg, var(--accent-purple), #5a1fd1);
   border: none;
   border-radius: var(--radius-md);
   color: #fff;
   font-weight: 700;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 15px rgba(123, 47, 255, 0.3);
@@ -2278,4 +2345,156 @@ h4 {
 
 .subscribe-btn:active {
   transform: translateY(0);
+}
+
+/* Brain status box in sidebar */
+.brain-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.brain-status.active {
+  background: rgba(0, 212, 255, 0.04);
+  border-color: rgba(0, 212, 255, 0.2);
+}
+
+.brain-status.inactive {
+  background: rgba(0, 229, 160, 0.03);
+  border-color: rgba(0, 229, 160, 0.15);
+}
+
+.brain-pulse {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  position: relative;
+}
+
+.brain-status.active .brain-pulse {
+  background: rgba(0, 212, 255, 0.15);
+  color: var(--accent-cyan);
+  animation: brain-pulse-glow 2s infinite;
+}
+
+.brain-status.inactive .brain-pulse {
+  background: rgba(0, 229, 160, 0.15);
+  color: var(--accent-green);
+}
+
+.brain-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brain-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brain-state {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+@keyframes brain-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(0, 212, 255, 0.2);
+  }
+}
+
+/* ===================== META INTELLIGENCE ===================== */
+.instagram-gradient {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.facebook-color {
+  background-color: #1877F2;
+}
+
+/* Tarjeta de Reel */
+.niche-card:hover .video-play-overlay {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+}
+
+.video-play-overlay {
+  opacity: 0;
+  transition: all 0.25s ease-in-out;
+}
+
+/* Efecto de zoom sutil en modal de Reel */
+.modal-container {
+  animation: modalScaleIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Animaciones e interactivos de Copywriter */
+.ai-section {
+  animation: aiSlideUp 0.4s ease-out;
+}
+
+@keyframes aiSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-section p {
+  margin-bottom: 8px;
+}
+
+.gancho-card {
+  box-shadow: 0 4px 20px rgba(225, 48, 108, 0.08);
+}
+
+.structure-card table th {
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+.structure-card table td {
+  line-height: 1.5;
+}
+
+.copy-card div {
+  font-family: 'Inter', sans-serif;
 }

@@ -5,9 +5,9 @@ import { hasCredits, consumeCredit } from '../services/credits';
 
 export default function NicheEvaluator() {
     const [topic, setTopic] = useState('');
-    const [demand, setDemand] = useState('Media');
-    const [competition, setCompetition] = useState('Media');
-    const [cpmRange, setCpmRange] = useState('Medium ($5 - $15)');
+    const [demand, setDemand] = useState('');
+    const [competition, setCompetition] = useState('');
+    const [cpmRange, setCpmRange] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [showResult, setShowResult] = useState(false);
@@ -15,13 +15,15 @@ export default function NicheEvaluator() {
     const [aiAdvice, setAiAdvice] = useState('');
 
     const effectiveness = useMemo(() => {
-        let score = 0;
         const demandMap = { 'Baja': 30, 'Media': 65, 'Alta': 100 };
-        score += demandMap[demand] * 0.4;
         const compMap = { 'Muy Baja': 100, 'Baja': 85, 'Media': 60, 'Alta': 30, 'Muy Alta': 10 };
-        score += compMap[competition] * 0.3;
         const cpmMap = { 'Low ($1 - $5)': 20, 'Medium ($5 - $15)': 60, 'High ($15 - $50+)': 100 };
-        score += cpmMap[cpmRange] * 0.3;
+
+        const dVal = demandMap[demand] || 0;
+        const cVal = compMap[competition] || 0;
+        const cpmVal = cpmMap[cpmRange] || 0;
+
+        let score = dVal * 0.4 + cVal * 0.3 + cpmVal * 0.3;
         return Math.round(score);
     }, [demand, competition, cpmRange]);
 
@@ -48,6 +50,11 @@ export default function NicheEvaluator() {
             if (!health.ok || health.keysConfigured === 0) {
                 setAnalysisLog('Aviso: Usando motor local (API desconectada)');
                 await new Promise(r => setTimeout(r, 1000));
+                
+                // Aplicar métricas por defecto en motor local
+                setDemand(currentStats.demand);
+                setCompetition(currentStats.competition);
+                setCpmRange(currentStats.cpmRange);
             } else {
                 setAnalysisLog(`Analizando señales para "${topic}"...`);
                 const data = await searchVideos({ q: topic, max: 15 });
@@ -86,6 +93,11 @@ export default function NicheEvaluator() {
                     else if (lowCPM.some(word => q.includes(word))) detectedCpm = 'Low ($1 - $5)';
                     setCpmRange(detectedCpm);
                     currentStats.cpmRange = detectedCpm;
+                } else {
+                    // Si no hay videos, usar métricas por defecto
+                    setDemand(currentStats.demand);
+                    setCompetition(currentStats.competition);
+                    setCpmRange(currentStats.cpmRange);
                 }
             }
 
@@ -168,29 +180,57 @@ export default function NicheEvaluator() {
                     <div className="eval-grid">
                         <div className="input-group">
                             <label>Demanda Detectada</label>
-                            <select value={demand} onChange={(e) => setDemand(e.target.value)} className="eval-select">
-                                <option>Baja</option>
-                                <option>Media</option>
-                                <option>Alta</option>
-                            </select>
+                            <div className={`eval-metric-box ${
+                                isCalculating ? 'calculating' : 
+                                demand === 'Alta' ? 'active-green' : 
+                                demand === 'Media' ? 'active-cyan' : 
+                                demand === 'Baja' ? 'active-red' : ''
+                            }`}>
+                                {isCalculating ? (
+                                    <Loader2 size={14} className="spin" />
+                                ) : demand ? (
+                                    <TrendingUp size={14} />
+                                ) : (
+                                    <Brain size={14} />
+                                )}
+                                <span>{isCalculating ? 'Calculando...' : demand || 'Pendiente de análisis'}</span>
+                            </div>
                         </div>
                         <div className="input-group">
                             <label>Nivel de Competencia</label>
-                            <select value={competition} onChange={(e) => setCompetition(e.target.value)} className="eval-select">
-                                <option>Muy Baja</option>
-                                <option>Baja</option>
-                                <option>Media</option>
-                                <option>Alta</option>
-                                <option>Muy Alta</option>
-                            </select>
+                            <div className={`eval-metric-box ${
+                                isCalculating ? 'calculating' : 
+                                ['Muy Baja', 'Baja'].includes(competition) ? 'active-green' : 
+                                competition === 'Media' ? 'active-cyan' : 
+                                ['Alta', 'Muy Alta'].includes(competition) ? 'active-red' : ''
+                            }`}>
+                                {isCalculating ? (
+                                    <Loader2 size={14} className="spin" />
+                                ) : competition ? (
+                                    <Target size={14} />
+                                ) : (
+                                    <Brain size={14} />
+                                )}
+                                <span>{isCalculating ? 'Calculando...' : competition || 'Pendiente de análisis'}</span>
+                            </div>
                         </div>
                         <div className="input-group">
                             <label>CPM Industry Tier</label>
-                            <select value={cpmRange} onChange={(e) => setCpmRange(e.target.value)} className="eval-select">
-                                <option>Low ($1 - $5)</option>
-                                <option>Medium ($5 - $15)</option>
-                                <option>High ($15 - $50+)</option>
-                            </select>
+                            <div className={`eval-metric-box ${
+                                isCalculating ? 'calculating' : 
+                                cpmRange === 'High ($15 - $50+)' ? 'active-green' : 
+                                cpmRange === 'Medium ($5 - $15)' ? 'active-cyan' : 
+                                cpmRange === 'Low ($1 - $5)' ? 'active-red' : ''
+                            }`}>
+                                {isCalculating ? (
+                                    <Loader2 size={14} className="spin" />
+                                ) : cpmRange ? (
+                                    <DollarSign size={14} />
+                                ) : (
+                                    <Brain size={14} />
+                                )}
+                                <span>{isCalculating ? 'Calculando...' : cpmRange || 'Pendiente de análisis'}</span>
+                            </div>
                         </div>
                     </div>
 
