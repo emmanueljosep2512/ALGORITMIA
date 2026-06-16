@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AlgoritmIA</string>
+    <string name="title_activity_main">AlgoritmIA</string>
+    <string name="package_name">com.algoritmia.app</string>
+    <string name="custom_url_scheme">com.algoritmia.app</string>
+</resources>

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Zap, TrendingUp, BarChart3, ShieldCheck, ChevronRight, PlayCircle, Globe, Target, Cpu, Brain, Flame } from 'lucide-react';
+import { Zap, TrendingUp, BarChart3, ShieldCheck, ChevronRight, PlayCircle, Globe, Target, Cpu, Brain, Flame, Smartphone } from 'lucide-react';
 
 export default function Landing() {
     const navigate = useNavigate();
@@ -10,9 +10,27 @@ export default function Landing() {
                 <div className="logo-text-premium" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
                     ALGORITM<span>.IA</span>
                 </div>
-                <div className="nav-links">
+                <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <button className="btn-text">Testimonios</button>
                     <button className="btn-text">Precios</button>
+                    <a
+                        href="/algoritmia.apk"
+                        download="algoritmia.apk"
+                        className="btn-text"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            textDecoration: 'none',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: '500',
+                            transition: 'color 0.2s',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <Smartphone size={16} /> APK Celular
+                    </a>
                     <button className="btn-primary-glow" onClick={() => navigate('/login')}>
                         Entrar a la APP
                     </button>
@@ -62,6 +80,20 @@ export default function Landing() {
                         <button className="btn-hero-main" onClick={() => navigate('/login')}>
                             Empezar Ahora <ChevronRight size={18} />
                         </button>
+                        <a
+                            href="/algoritmia.apk"
+                            download="algoritmia.apk"
+                            className="btn-hero-secondary"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                textDecoration: 'none',
+                                boxSizing: 'border-box'
+                            }}
+                        >
+                            <Smartphone size={18} /> Descargar APK
+                        </a>
                         <button className="btn-hero-secondary">
                             <PlayCircle size={18} /> Ver Masterclass Gratis
                         </button>

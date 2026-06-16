@@ -1,0 +1,8 @@
+{
+  "appId": "com.algoritmia.app",
+  "appName": "AlgoritmIA",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

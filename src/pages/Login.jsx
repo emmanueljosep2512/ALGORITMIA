@@ -67,6 +67,45 @@ const Login = () => {
           </button>
         </div>
 
+        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>¿Prefieres usar la App en tu Celular?</span>
+          <a
+            href="/algoritmia.apk"
+            download="algoritmia.apk"
+            className="apk-login-download-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '0.75rem 1.2rem',
+              borderRadius: '12px',
+              border: '1px solid rgba(78, 204, 163, 0.2)',
+              background: 'rgba(78, 204, 163, 0.05)',
+              color: '#4ecca3',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              textDecoration: 'none',
+              transition: 'all 0.3s ease',
+              width: '100%',
+              boxSizing: 'border-box',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(78, 204, 163, 0.15)';
+              e.currentTarget.style.borderColor = '#4ecca3';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(78, 204, 163, 0.05)';
+              e.currentTarget.style.borderColor = 'rgba(78, 204, 163, 0.2)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            📱 Descargar App (APK)
+          </a>
+        </div>
+
         <div className="login-footer">
           <p>Al continuar, aceptas nuestros términos y la política de privacidad de datos.</p>
         </div>
