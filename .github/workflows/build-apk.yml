@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Permite ejecutar la compilación manualmente desde la web de GitHub
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -38,12 +38,20 @@ jobs:
 
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          log-accepted-android-sdk-licenses: true
+
+      - name: Instalar SDK 36
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Compilar APK (Gradle)
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace --info 2>&1 | tail -200
 
       - name: Subir APK Compilado como Artefacto
         uses: actions/upload-artifact@v4
