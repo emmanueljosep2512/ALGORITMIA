@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Zap, Check, ShieldCheck, Sparkles, ArrowLeft, Loader2, Copy, Coins, QrCode, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createBinanceOrder, verifyManualBinancePayment } from '../services/api';
-
+import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 const SubscriptionBarrier = () => {
     const navigate = useNavigate();
@@ -22,6 +23,30 @@ const SubscriptionBarrier = () => {
     const [txId, setTxId] = useState('');
     const [txError, setTxError] = useState('');
     const [copied, setCopied] = useState(false);
+    const [paymentPending, setPaymentPending] = useState(false);
+
+    // Escuchar actualizaciones de suscripción en tiempo real y redirigir
+    useEffect(() => {
+        const checkSubscription = () => {
+            const isSubscribed = localStorage.getItem('algoritmia_subscribed') === 'true';
+            if (isSubscribed) {
+                console.log("🚀 Suscripción detectada en tiempo real. Redirigiendo al Dashboard...");
+                navigate('/dashboard');
+            }
+        };
+
+        window.addEventListener('storage', checkSubscription);
+        window.addEventListener('creditsUpdated', checkSubscription);
+        
+        // Comprobar al montar
+        checkSubscription();
+
+        return () => {
+            window.removeEventListener('storage', checkSubscription);
+            window.removeEventListener('creditsUpdated', checkSubscription);
+        };
+    }, [navigate]);
+
 
 
     const successParam = searchParams.get('success');
@@ -76,6 +101,7 @@ const SubscriptionBarrier = () => {
         setBinanceOrder(null);
         setTxId('');
         setTxError('');
+        setPaymentPending(false);
         setShowPaymentModal(true);
     };
 
@@ -119,27 +145,32 @@ const SubscriptionBarrier = () => {
         setTxError('');
 
         try {
+            // 1. Notificar al backend proxy
             const result = await verifyManualBinancePayment({
-                transactionId: txId,
+                transactionId: txId.trim(),
                 plan: selectedPlan,
                 merchantTradeNo: binanceOrder?.merchantTradeNo
             });
 
             if (result.success) {
-                const planName = selectedPlan === 'pro' ? 'Creador PRO' : 'Agencia Élite';
-                const credits = selectedPlan === 'pro' ? 150 : 400;
-
-                localStorage.setItem('algoritmia_subscribed', 'true');
-                localStorage.setItem('algoritmia_plan', planName);
-                localStorage.setItem('algoritmia_credits', credits.toString());
-                localStorage.setItem('algoritmia_credits_total', credits.toString());
-
-                window.dispatchEvent(new Event('storage'));
-                window.dispatchEvent(new Event('creditsUpdated'));
-
-                setSuccessPlan(planName);
-                setPaymentSuccess(true);
-                setShowPaymentModal(false);
+                // 2. Registrar el pago en la base de datos segura en Firestore (con estado 'pending')
+                const auth = getAuth();
+                const currentUser = auth.currentUser;
+                if (currentUser) {
+                    const db = getFirestore();
+                    const paymentDocRef = doc(db, 'payments', txId.trim());
+                    await setDoc(paymentDocRef, {
+                        userId: currentUser.uid,
+                        userEmail: currentUser.email || '',
+                        plan: selectedPlan,
+                        transactionId: txId.trim(),
+                        status: 'pending',
+                        timestamp: serverTimestamp()
+                    });
+                }
+                
+                // 3. Activar pantalla de pendiente (en lugar de dar acceso inmediato)
+                setPaymentPending(true);
             }
         } catch (err) {
             console.error(err);
@@ -303,7 +334,31 @@ const SubscriptionBarrier = () => {
                             </button>
                         </div>
                         
-                        {paymentMethod === null ? (
+                        {paymentPending ? (
+                            <div className="modal-body-loading" style={{ padding: '2.5rem 1.5rem' }}>
+                                <Loader2 className="spin" size={42} style={{ color: '#f3ba2f', marginBottom: '1.5rem' }} />
+                                <h4 style={{ color: '#f3ba2f', fontFamily: 'Outfit', fontSize: '1.2rem', marginBottom: '0.8rem', fontWeight: 700 }}>⌛ Pago en Verificación</h4>
+                                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.5, textAlign: 'center', marginBottom: '1.5rem' }}>
+                                    Tu ID de transacción <strong>{txId}</strong> ha sido enviado para verificación manual.
+                                </p>
+                                <div style={{
+                                    background: 'rgba(255, 255, 255, 0.02)',
+                                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                                    borderRadius: 16,
+                                    padding: '1rem',
+                                    fontSize: '0.8rem',
+                                    color: 'var(--text-muted)',
+                                    lineHeight: 1.5,
+                                    textAlign: 'center',
+                                    marginBottom: '1.5rem'
+                                }}>
+                                    Tu plan se activará de forma **automática** una vez verificado el depósito en Binance (usualmente toma de 1 a 12 horas). Puedes cerrar esta ventana sin problemas.
+                                </div>
+                                <button className="pay-btn standard" onClick={() => setShowPaymentModal(false)} style={{ width: 'auto', padding: '0.8rem 2rem' }}>
+                                    Entendido, Cerrar
+                                </button>
+                            </div>
+                        ) : paymentMethod === null ? (
                             <div className="payment-selection-body">
                                 <p className="modal-plan-summary">
                                     Estás suscribiéndote al plan <strong>{selectedPlan === 'pro' ? 'Creador PRO' : 'Agencia Élite'}</strong> por <strong>${selectedPlan === 'pro' ? '19.00' : '39.00'} USD/mes</strong>.

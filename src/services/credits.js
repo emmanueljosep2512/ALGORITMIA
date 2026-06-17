@@ -9,6 +9,9 @@ export const hasCredits = () => {
     return getCredits() > 0;
 };
 
+import { getFirestore, doc, updateDoc, increment } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
 export const consumeCredit = () => {
     const current = getCredits();
     if (current <= 0) {
@@ -16,6 +19,21 @@ export const consumeCredit = () => {
     }
     const next = current - 1;
     localStorage.setItem('algoritmia_credits', next.toString());
+    
+    // Sincronizar descuento con Firestore
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user) {
+        try {
+            const db = getFirestore();
+            const userDocRef = doc(db, 'users', user.uid);
+            updateDoc(userDocRef, {
+                credits: increment(-1)
+            }).catch(err => console.error("Error actualizando créditos en Firestore:", err.message));
+        } catch (e) {
+            console.error("Error al acceder a Firestore:", e.message);
+        }
+    }
     
     // Notify sidebar and other listeners
     window.dispatchEvent(new Event('storage'));

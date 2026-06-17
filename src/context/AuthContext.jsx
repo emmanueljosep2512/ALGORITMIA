@@ -8,6 +8,13 @@ import {
     OAuthProvider
 } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    onSnapshot,
+    serverTimestamp
+} from 'firebase/firestore';
 
 // Configuración real desde las variables de entorno de Vite
 const firebaseConfig = {
@@ -22,6 +29,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
@@ -31,13 +39,60 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Ya no es necesario getRedirectResult al usar signInWithPopup
+        let unsubscribeSnapshot = null;
 
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-            setUser(firebaseUser);
+        const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                const userDocRef = doc(db, 'users', firebaseUser.uid);
+
+                // Configurar el listener en tiempo real del documento del usuario
+                unsubscribeSnapshot = onSnapshot(userDocRef, async (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        
+                        // Sincronizar localmente en localStorage (mantiene compatibilidad)
+                        localStorage.setItem('algoritmia_subscribed', data.subscribed ? 'true' : 'false');
+                        localStorage.setItem('algoritmia_plan', data.plan || 'Gratuito');
+                        localStorage.setItem('algoritmia_credits', (data.credits ?? 0).toString());
+                        localStorage.setItem('algoritmia_credits_total', (data.creditsTotal ?? 0).toString());
+                        
+                        // Disparar eventos para actualizar Sidebar y Dashboard
+                        window.dispatchEvent(new Event('storage'));
+                        window.dispatchEvent(new Event('creditsUpdated'));
+                    } else {
+                        // Si no existe el documento, inicializar perfil en Firestore
+                        const initialData = {
+                            email: firebaseUser.email || '',
+                            subscribed: false,
+                            plan: 'Gratuito',
+                            credits: 5,
+                            creditsTotal: 5,
+                            createdAt: serverTimestamp()
+                        };
+                        try {
+                            await setDoc(userDocRef, initialData);
+                        } catch (err) {
+                            console.error("Error al inicializar usuario en Firestore:", err.message);
+                        }
+                    }
+                });
+
+                setUser(firebaseUser);
+            } else {
+                // Si se cierra sesión, limpiar el listener
+                if (unsubscribeSnapshot) {
+                    unsubscribeSnapshot();
+                    unsubscribeSnapshot = null;
+                }
+                setUser(null);
+            }
             setLoading(false);
         });
-        return unsubscribe;
+
+        return () => {
+            unsubscribeAuth();
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+        };
     }, []);
 
     const loginWithGoogle = () => {
@@ -66,3 +121,4 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+
