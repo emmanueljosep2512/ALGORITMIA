@@ -20,4 +20,16 @@ export default defineConfig({
       apply: 'build'
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // Dividir las dependencias grandes de node_modules en un chunk vendor separado
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 })
