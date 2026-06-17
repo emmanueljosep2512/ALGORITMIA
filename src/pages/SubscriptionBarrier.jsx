@@ -990,10 +990,10 @@ const SubscriptionBarrier = () => {
                 }
 
                 .binance-qr {
-                    width: 160px;
-                    height: 160px;
+                    width: 240px;
+                    height: auto;
                     background: white;
-                    padding: 8px;
+                    padding: 12px;
                     border-radius: 16px;
                     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
                 }
