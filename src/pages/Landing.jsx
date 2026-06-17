@@ -11,8 +11,6 @@ export default function Landing() {
                     ALGORITM<span>.IA</span>
                 </div>
                 <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <button className="btn-text">Testimonios</button>
-                    <button className="btn-text">Precios</button>
                     <button className="btn-primary-glow" onClick={() => navigate('/login')}>
                         Entrar a la APP
                     </button>

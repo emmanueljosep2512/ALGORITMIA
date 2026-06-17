@@ -186,6 +186,20 @@ export async function fetchMetaAds({ q = '', category = 'Todas' } = {}) {
 }
 
 /**
+ * Analizar un anuncio de Meta (Deconstrucción + IA)
+ */
+export async function analyzeMetaAd(ad) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/meta/analyze-ad`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ad })
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}: \${(await res.json())?.error || 'Error al analizar el anuncio'}`);
+    return res.json();
+}
+
+/**
  * Generar copys y guiones para Meta con IA
  */
 export async function generateMetaCopy({ niche, platform = 'Instagram', type = 'Reel Script' }) {
@@ -230,3 +244,35 @@ export const timeAgo = (date) => {
     const d = Math.floor(h / 24);
     return `Hace ${d}d`;
 };
+
+/**
+ * Inicializar una orden de pago de Binance Pay (manual o automática)
+ */
+export async function createBinanceOrder(plan) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/payment/binance/create-order`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+            plan,
+            returnUrl: `${window.location.origin}/suscripcion`
+        })
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || 'Error al crear orden de Binance Pay'}`);
+    return res.json();
+}
+
+/**
+ * Enviar comprobante de transacción manual para verificación
+ */
+export async function verifyManualBinancePayment({ transactionId, plan, merchantTradeNo }) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/payment/binance/verify-manual`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ transactionId, plan, merchantTradeNo })
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || 'Error al enviar reporte de pago'}`);
+    return res.json();
+}
+

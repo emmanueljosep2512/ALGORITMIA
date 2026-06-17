@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Zap, Check, ShieldCheck, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
+import { Zap, Check, ShieldCheck, Sparkles, ArrowLeft, Loader2, Copy, Coins, QrCode, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { createBinanceOrder, verifyManualBinancePayment } from '../services/api';
+
 
 const SubscriptionBarrier = () => {
     const navigate = useNavigate();
@@ -10,6 +12,17 @@ const SubscriptionBarrier = () => {
     const [simulating, setSimulating] = useState(false);
     const [paymentSuccess, setPaymentSuccess] = useState(false);
     const [successPlan, setSuccessPlan] = useState('');
+
+    // Estados para Binance Pay y Modal de Pago
+    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState(null);
+    const [binanceOrder, setBinanceOrder] = useState(null);
+    const [binanceLoading, setBinanceLoading] = useState(false);
+    const [txId, setTxId] = useState('');
+    const [txError, setTxError] = useState('');
+    const [copied, setCopied] = useState(false);
+
 
     const successParam = searchParams.get('success');
     const planParam = searchParams.get('plan');
@@ -55,6 +68,95 @@ const SubscriptionBarrier = () => {
             navigate('/dashboard');
         }, 800);
     };
+
+    // Funciones para manejar pasarela de Binance Pay
+    const handleOpenPaymentModal = (plan) => {
+        setSelectedPlan(plan);
+        setPaymentMethod(null);
+        setBinanceOrder(null);
+        setTxId('');
+        setTxError('');
+        setShowPaymentModal(true);
+    };
+
+    const handleSelectPaymentMethod = async (method) => {
+        setPaymentMethod(method);
+        setTxError('');
+
+        if (method === 'paypal') {
+            const link = selectedPlan === 'pro' ? paypalLinkPro : paypalLinkElite;
+            window.open(link, '_blank');
+        } else if (method === 'binance') {
+            setBinanceLoading(true);
+            try {
+                const orderData = await createBinanceOrder(selectedPlan);
+                if (orderData.success) {
+                    if (orderData.mode === 'automatic') {
+                        // Redirigir directamente al checkout oficial de Binance
+                        window.location.href = orderData.checkoutUrl;
+                    } else {
+                        // Cargar datos en pantalla para pago manual con QR
+                        setBinanceOrder(orderData);
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                setTxError(err.message || 'Error al conectar con la pasarela de Binance Pay.');
+                setPaymentMethod(null); // Volver atrás en caso de error
+            } finally {
+                setBinanceLoading(false);
+            }
+        }
+    };
+
+    const handleConfirmManualPayment = async () => {
+        if (!txId.trim() || txId.trim().length < 6) {
+            setTxError('Por favor, ingresa un ID de transacción válido (mínimo 6 caracteres).');
+            return;
+        }
+
+        setBinanceLoading(true);
+        setTxError('');
+
+        try {
+            const result = await verifyManualBinancePayment({
+                transactionId: txId,
+                plan: selectedPlan,
+                merchantTradeNo: binanceOrder?.merchantTradeNo
+            });
+
+            if (result.success) {
+                const planName = selectedPlan === 'pro' ? 'Creador PRO' : 'Agencia Élite';
+                const credits = selectedPlan === 'pro' ? 150 : 400;
+
+                localStorage.setItem('algoritmia_subscribed', 'true');
+                localStorage.setItem('algoritmia_plan', planName);
+                localStorage.setItem('algoritmia_credits', credits.toString());
+                localStorage.setItem('algoritmia_credits_total', credits.toString());
+
+                window.dispatchEvent(new Event('storage'));
+                window.dispatchEvent(new Event('creditsUpdated'));
+
+                setSuccessPlan(planName);
+                setPaymentSuccess(true);
+                setShowPaymentModal(false);
+            }
+        } catch (err) {
+            console.error(err);
+            setTxError(err.message || 'Error al procesar el reporte de pago.');
+        } finally {
+            setBinanceLoading(false);
+        }
+    };
+
+    const handleCopyPayId = () => {
+        if (binanceOrder?.payId) {
+            navigator.clipboard.writeText(binanceOrder.payId);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
 
     // Armar URLs de pago de PayPal de forma dinámica con el return URL del dominio activo
     const origin = window.location.origin;
@@ -123,14 +225,12 @@ const SubscriptionBarrier = () => {
                         </ul>
                     </div>
                     <div className="card-footer">
-                        <a 
-                            href={paypalLinkPro} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
+                        <button 
+                            onClick={() => handleOpenPaymentModal('pro')} 
                             className="pay-btn standard"
                         >
                             Suscribirse Creador PRO
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -155,14 +255,12 @@ const SubscriptionBarrier = () => {
                         </ul>
                     </div>
                     <div className="card-footer">
-                        <a 
-                            href={paypalLinkElite} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
+                        <button 
+                            onClick={() => handleOpenPaymentModal('elite')} 
                             className="pay-btn premium"
                         >
                             Suscribirse Agencia Élite
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -190,6 +288,138 @@ const SubscriptionBarrier = () => {
                         >
                             {simulating ? 'Procesando...' : 'Simular Pago: Agencia Élite (400 Cr)'}
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL DE SELECCIÓN DE PAGO & BINANCE PAY */}
+            {showPaymentModal && (
+                <div className="payment-modal-overlay">
+                    <div className="payment-modal-card">
+                        <div className="modal-header">
+                            <h3>🛒 Confirmación de Suscripción</h3>
+                            <button className="close-modal" onClick={() => setShowPaymentModal(false)}>
+                                <X size={18} />
+                            </button>
+                        </div>
+                        
+                        {paymentMethod === null ? (
+                            <div className="payment-selection-body">
+                                <p className="modal-plan-summary">
+                                    Estás suscribiéndote al plan <strong>{selectedPlan === 'pro' ? 'Creador PRO' : 'Agencia Élite'}</strong> por <strong>${selectedPlan === 'pro' ? '19.00' : '39.00'} USD/mes</strong>.
+                                </p>
+                                <span className="selection-label">Selecciona tu método de pago preferido:</span>
+                                
+                                <div className="payment-methods-list">
+                                    <button 
+                                        className="method-selection-card paypal"
+                                        onClick={() => handleSelectPaymentMethod('paypal')}
+                                    >
+                                        <div className="method-logo-container">💳</div>
+                                        <div className="method-text">
+                                            <h4>PayPal o Tarjeta</h4>
+                                            <p>Paga usando saldo de PayPal o tarjeta de débito/crédito internacional.</p>
+                                        </div>
+                                    </button>
+
+                                    <button 
+                                        className="method-selection-card binance"
+                                        onClick={() => handleSelectPaymentMethod('binance')}
+                                    >
+                                        <div className="method-logo-container binance-pay-logo">🔶</div>
+                                        <div className="method-text">
+                                            <h4>Binance Pay (Recomendado)</h4>
+                                            <p>Transfiere USDT de forma directa e instantánea sin pagar comisiones de red.</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        ) : paymentMethod === 'paypal' ? (
+                            <div className="modal-body-loading">
+                                <Loader2 className="spin" size={36} style={{ color: 'var(--accent-purple-light)', marginBottom: '1.5rem' }} />
+                                <h4>Redirigiendo a PayPal...</h4>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.5rem', textAlign: 'center' }}>
+                                    Hemos abierto la pasarela de PayPal en una pestaña nueva para completar tu transacción. Una vez pagado, tu suscripción se activará.
+                                </p>
+                                <a 
+                                    href={selectedPlan === 'pro' ? paypalLinkPro : paypalLinkElite} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="pay-btn standard" 
+                                    style={{ marginTop: '1.5rem', width: 'auto', display: 'inline-flex', padding: '0.8rem 1.5rem' }}
+                                >
+                                    Abrir Ventana Manualmente
+                                </a>
+                            </div>
+                        ) : (
+                            // Binance Pay Flow
+                            <div className="binance-pay-instructions">
+                                {binanceLoading ? (
+                                    <div className="modal-body-loading">
+                                        <Loader2 className="spin" size={36} style={{ color: 'var(--accent-cyan)', marginBottom: '1.5rem' }} />
+                                        <h4>Procesando con Binance Pay...</h4>
+                                    </div>
+                                ) : binanceOrder ? (
+                                    <div className="binance-manual-flow">
+                                        <div className="price-badge-container">
+                                            <Coins size={18} style={{ color: 'var(--accent-cyan)' }} />
+                                            <span>Monto Exacto: <strong>{binanceOrder.price.toFixed(2)} USDT</strong></span>
+                                        </div>
+                                        
+                                        <p className="instruction-text">
+                                            Escanea este código QR desde la App de Binance (sección Pay) o transfiere directamente al ID indicado abajo.
+                                        </p>
+                                        
+                                        <div className="qr-container">
+                                            <img src={binanceOrder.qrImage} alt="QR Binance Pay" className="binance-qr" />
+                                            <div className="qr-badge"><QrCode size={12} /> Binance Pay QR</div>
+                                        </div>
+                                        
+                                        <div className="pay-id-box">
+                                            <div className="pay-id-label">Binance Pay ID de Algoritmia:</div>
+                                            <div className="pay-id-value-container">
+                                                <span className="pay-id-val">{binanceOrder.payId}</span>
+                                                <button className="copy-btn-pay" onClick={handleCopyPayId}>
+                                                    {copied ? '¡Copiado!' : <Copy size={12} />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="verification-form">
+                                            <label className="input-label">Ingresa el ID de la Transacción o tu Nombre de Usuario de Binance:</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Ej. 38194029 o tu_usuario_binance" 
+                                                value={txId} 
+                                                onChange={(e) => setTxId(e.target.value)} 
+                                                className="modal-input"
+                                            />
+                                            {txError && (
+                                                <div className="error-alert">
+                                                    <AlertCircle size={14} />
+                                                    <span>{txError}</span>
+                                                </div>
+                                            )}
+                                            <button className="confirm-btn-pay" onClick={handleConfirmManualPayment}>
+                                                Confirmar Transferencia
+                                            </button>
+                                            <button className="modal-back-btn" onClick={() => setPaymentMethod(null)}>
+                                                Atrás
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="modal-body-loading">
+                                        <AlertCircle size={32} style={{ color: '#ff4d4d', marginBottom: '1rem' }} />
+                                        <h4>Error al inicializar orden</h4>
+                                        <p>{txError || 'Inténtalo de nuevo en unos momentos.'}</p>
+                                        <button className="modal-back-btn" onClick={() => setPaymentMethod(null)} style={{ marginTop: '1.5rem' }}>
+                                            Volver
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -528,6 +758,358 @@ const SubscriptionBarrier = () => {
                 .secure-text {
                     font-size: 0.75rem;
                     color: var(--text-muted);
+                }
+
+                /* PAYMENT MODAL & BINANCE PAY STYLES */
+                .payment-modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(4, 3, 8, 0.85);
+                    backdrop-filter: blur(12px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                    padding: 1rem;
+                    animation: fadeIn 0.2s ease;
+                }
+
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+
+                .payment-modal-card {
+                    background: #0c081d;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 24px;
+                    width: 100%;
+                    max-width: 480px;
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+                    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                @keyframes slideUp {
+                    from { transform: translateY(20px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+
+                .modal-header {
+                    padding: 1.5rem;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .modal-header h3 {
+                    font-family: 'Outfit', sans-serif;
+                    font-size: 1.15rem;
+                    font-weight: 700;
+                    margin: 0;
+                }
+
+                .close-modal {
+                    background: none;
+                    border: none;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    transition: color 0.2s;
+                }
+
+                .close-modal:hover {
+                    color: white;
+                }
+
+                .payment-selection-body {
+                    padding: 1.5rem;
+                }
+
+                .modal-plan-summary {
+                    font-size: 0.95rem;
+                    color: var(--text-secondary);
+                    line-height: 1.5;
+                    margin-bottom: 1.5rem;
+                }
+
+                .selection-label {
+                    font-size: 0.8rem;
+                    color: var(--text-muted);
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    display: block;
+                    margin-bottom: 1rem;
+                }
+
+                .payment-methods-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1rem;
+                }
+
+                .method-selection-card {
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.06);
+                    border-radius: 16px;
+                    padding: 1.2rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 1.2rem;
+                    cursor: pointer;
+                    text-align: left;
+                    width: 100%;
+                    transition: all 0.2s;
+                }
+
+                .method-selection-card:hover {
+                    background: rgba(255, 255, 255, 0.06);
+                    border-color: rgba(123, 47, 255, 0.3);
+                    transform: translateY(-2px);
+                }
+
+                .method-selection-card.binance:hover {
+                    border-color: #f3ba2f;
+                }
+
+                .method-logo-container {
+                    font-size: 1.8rem;
+                    width: 48px;
+                    height: 48px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+
+                .method-logo-container.binance-pay-logo {
+                    color: #f3ba2f;
+                    text-shadow: 0 0 10px rgba(243, 186, 47, 0.3);
+                }
+
+                .method-text {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+
+                .method-text h4 {
+                    font-size: 0.95rem;
+                    font-weight: 700;
+                    margin: 0;
+                    color: white;
+                }
+
+                .method-text p {
+                    font-size: 0.78rem;
+                    color: var(--text-muted);
+                    line-height: 1.4;
+                    margin: 0;
+                }
+
+                .modal-body-loading {
+                    padding: 3rem 1.5rem;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .modal-body-loading h4 {
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    margin-bottom: 0.5rem;
+                }
+
+                .modal-body-loading p {
+                    font-size: 0.85rem;
+                    color: var(--text-muted);
+                    text-align: center;
+                    line-height: 1.5;
+                }
+
+                .binance-pay-instructions {
+                    padding: 1.5rem;
+                }
+
+                .price-badge-container {
+                    background: rgba(0, 212, 255, 0.08);
+                    border: 1px solid rgba(0, 212, 255, 0.15);
+                    border-radius: 12px;
+                    padding: 0.8rem 1.2rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    font-size: 0.95rem;
+                    margin-bottom: 1rem;
+                }
+
+                .price-badge-container strong {
+                    color: var(--accent-cyan);
+                    font-size: 1.1rem;
+                }
+
+                .instruction-text {
+                    font-size: 0.82rem;
+                    color: var(--text-secondary);
+                    line-height: 1.5;
+                    text-align: center;
+                    margin-bottom: 1.5rem;
+                }
+
+                .qr-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 1.5rem;
+                }
+
+                .binance-qr {
+                    width: 160px;
+                    height: 160px;
+                    background: white;
+                    padding: 8px;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                }
+
+                .qr-badge {
+                    font-size: 0.65rem;
+                    font-weight: 700;
+                    color: #f3ba2f;
+                    background: rgba(243, 186, 47, 0.1);
+                    border: 1px solid rgba(243, 186, 47, 0.2);
+                    padding: 2px 8px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+
+                .pay-id-box {
+                    background: rgba(255, 255, 255, 0.02);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border-radius: 12px;
+                    padding: 0.8rem;
+                    margin-bottom: 1.5rem;
+                }
+
+                .pay-id-label {
+                    font-size: 0.75rem;
+                    color: var(--text-muted);
+                    margin-bottom: 4px;
+                }
+
+                .pay-id-value-container {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .pay-id-val {
+                    font-family: monospace;
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    letter-spacing: 0.05em;
+                    color: white;
+                }
+
+                .copy-btn-pay {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: var(--text-secondary);
+                    font-size: 0.75rem;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+
+                .copy-btn-pay:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: white;
+                }
+
+                .verification-form {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+
+                .input-label {
+                    font-size: 0.8rem;
+                    color: var(--text-secondary);
+                }
+
+                .modal-input {
+                    background: rgba(0, 0, 0, 0.3);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 10px;
+                    padding: 0.8rem;
+                    color: white;
+                    font-size: 0.9rem;
+                    outline: none;
+                    transition: border-color 0.2s;
+                }
+
+                .modal-input:focus {
+                    border-color: var(--accent-cyan);
+                }
+
+                .error-alert {
+                    background: rgba(255, 77, 77, 0.1);
+                    border: 1px solid rgba(255, 77, 77, 0.2);
+                    border-radius: 8px;
+                    padding: 0.6rem;
+                    color: #ff4d4d;
+                    font-size: 0.78rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .confirm-btn-pay {
+                    background: linear-gradient(135deg, #f3ba2f, #dca113);
+                    color: #0c081d;
+                    border: none;
+                    border-radius: 10px;
+                    padding: 0.8rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    box-shadow: 0 4px 15px rgba(243, 186, 47, 0.2);
+                }
+
+                .confirm-btn-pay:hover {
+                    box-shadow: 0 6px 20px rgba(243, 186, 47, 0.4);
+                    filter: brightness(1.05);
+                    transform: translateY(-1px);
+                }
+
+                .modal-back-btn {
+                    background: none;
+                    border: none;
+                    color: var(--text-muted);
+                    font-size: 0.8rem;
+                    padding: 0.5rem;
+                    cursor: pointer;
+                    transition: color 0.2s;
+                }
+
+                .modal-back-btn:hover {
+                    color: white;
                 }
             `}</style>
         </div>

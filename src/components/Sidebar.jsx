@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Search, Compass, Flame, TrendingUp, Cpu, Zap, WifiOff, Sparkles, Instagram } from 'lucide-react';
+import { LayoutDashboard, Search, Compass, Flame, TrendingUp, Cpu, Zap, WifiOff, Sparkles, Instagram, AlertTriangle } from 'lucide-react';
 import { checkHealth } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -106,12 +106,12 @@ export default function Sidebar() {
                         <div className="brain-state">
                             {health.loading ? 'Sincronizando...' : (
                                 health.ok ? (
-                                    <span style={{ color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                        <TrendingUp size={10} /> Red Neuronal Activa
+                                    <span style={{ color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        <Zap size={10} fill="currentColor" /> Conectado al Cerebro IA
                                     </span>
                                 ) : (
-                                    <span style={{ color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                        <Zap size={10} /> Conectado al Cerebro IA
+                                    <span style={{ color: 'var(--accent-red)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        <AlertTriangle size={10} /> Cerebro Desconectado
                                     </span>
                                 )
                             )}
