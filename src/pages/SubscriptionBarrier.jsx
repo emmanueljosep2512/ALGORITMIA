@@ -363,11 +363,15 @@ const SubscriptionBarrier = () => {
                                     <div className="binance-manual-flow">
                                         <div className="price-badge-container">
                                             <Coins size={18} style={{ color: 'var(--accent-cyan)' }} />
-                                            <span>Monto Exacto: <strong>{binanceOrder.price.toFixed(2)} USDT</strong></span>
+                                            <span>Monto Exacto: <strong>{binanceOrder.price.toFixed(2)} USDT / USDC</strong></span>
+                                        </div>
+
+                                        <div className="crypto-warning-box">
+                                            ⚠️ <strong>Solo pagos en USDT o USDC:</strong> Se requiere transferir la cantidad exacta en monedas estables (USDT o USDC) a través de Binance Pay.
                                         </div>
                                         
                                         <p className="instruction-text">
-                                            Escanea este código QR desde la App de Binance (sección Pay) o transfiere directamente al ID indicado abajo.
+                                            Escanea este código QR desde la App de Binance o transfiere directamente al nombre de usuario o ID indicado abajo.
                                         </p>
                                         
                                         <div className="qr-container">
@@ -376,7 +380,7 @@ const SubscriptionBarrier = () => {
                                         </div>
                                         
                                         <div className="pay-id-box">
-                                            <div className="pay-id-label">Binance Pay ID de Algoritmia:</div>
+                                            <div className="pay-id-label">Usuario / ID Binance Pay de Algoritmia:</div>
                                             <div className="pay-id-value-container">
                                                 <span className="pay-id-val">{binanceOrder.payId}</span>
                                                 <button className="copy-btn-pay" onClick={handleCopyPayId}>
@@ -937,6 +941,18 @@ const SubscriptionBarrier = () => {
 
                 .binance-pay-instructions {
                     padding: 1.5rem;
+                }
+
+                .crypto-warning-box {
+                    background: rgba(243, 186, 47, 0.08);
+                    border: 1px solid rgba(243, 186, 47, 0.2);
+                    border-radius: 12px;
+                    padding: 0.8rem 1rem;
+                    font-size: 0.78rem;
+                    line-height: 1.45;
+                    color: #f3ba2f;
+                    margin-bottom: 1rem;
+                    text-align: center;
                 }
 
                 .price-badge-container {
