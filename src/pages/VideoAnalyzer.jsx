@@ -4,7 +4,7 @@ import { analyzeVideo, formatViews, formatVPH } from '../services/api';
 import { hasCredits, consumeCredit } from '../services/credits';
 
 function extractVideoId(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?\/]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
 }
@@ -25,7 +25,7 @@ export default function VideoAnalyzer() {
 
         const videoId = extractVideoId(urlInput);
         if (!videoId) {
-            setError('Por favor, ingresa un enlace válido de YouTube (ej. https://www.youtube.com/watch?v=...)');
+            setError('Por favor, ingresa un enlace válido de YouTube o Shorts (ej. https://www.youtube.com/watch?v=... o https://www.youtube.com/shorts/...)');
             return;
         }
 
@@ -65,7 +65,7 @@ export default function VideoAnalyzer() {
                     <div style={{ position: 'relative', flex: 1 }}>
                         <input
                             type="text"
-                            placeholder="Pega el link de YouTube aquí... (ej. https://www.youtube.com/watch?v=dQw4w9WgXcQ)"
+                            placeholder="Pega el link de YouTube o Shorts aquí... (ej. https://www.youtube.com/watch?v=dQw4w9WgXcQ o https://www.youtube.com/shorts/...)"
                             value={urlInput}
                             onChange={(e) => setUrlInput(e.target.value)}
                             className="eval-input"
