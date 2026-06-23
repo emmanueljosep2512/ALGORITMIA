@@ -276,3 +276,17 @@ export async function verifyManualBinancePayment({ transactionId, plan, merchant
     return res.json();
 }
 
+/**
+ * Inicializar perfil de usuario en el backend (valida IP y asigna créditos gratis de bienvenida)
+ */
+export async function initializeUserProfile() {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/user/initialize`, {
+        method: 'POST',
+        headers
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${(await res.json())?.error || 'Error al inicializar usuario'}`);
+    return res.json();
+}
+
+

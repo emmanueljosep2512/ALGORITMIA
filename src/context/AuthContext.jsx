@@ -15,6 +15,8 @@ import {
     onSnapshot,
     serverTimestamp
 } from 'firebase/firestore';
+import { initializeUserProfile } from '../services/api';
+
 
 // Configuración real desde las variables de entorno de Vite
 const firebaseConfig = {
@@ -60,19 +62,27 @@ export const AuthProvider = ({ children }) => {
                         window.dispatchEvent(new Event('storage'));
                         window.dispatchEvent(new Event('creditsUpdated'));
                     } else {
-                        // Si no existe el documento, inicializar perfil en Firestore
-                        const initialData = {
-                            email: firebaseUser.email || '',
-                            subscribed: false,
-                            plan: 'Gratuito',
-                            credits: 5,
-                            creditsTotal: 5,
-                            createdAt: serverTimestamp()
-                        };
+                        // Intentar inicialización segura a través de la validación de IP en el backend
                         try {
-                            await setDoc(userDocRef, initialData);
-                        } catch (err) {
-                            console.error("Error al inicializar usuario en Firestore:", err.message);
+                            console.log("🔒 Solicitando inicialización de perfil segura al backend...");
+                            await initializeUserProfile();
+                        } catch (backendErr) {
+                            console.warn("⚠️ Backend no pudo inicializar el usuario (posible dev local). Usando fallback local...", backendErr.message);
+                            // Fallback local en desarrollo/ausencia de backend: crear perfil directamente en Firestore
+                            // Limitado a 1 crédito como medida de prevención base
+                            const initialData = {
+                                email: firebaseUser.email || '',
+                                subscribed: false,
+                                plan: 'Gratuito',
+                                credits: 1,
+                                creditsTotal: 1,
+                                createdAt: serverTimestamp()
+                            };
+                            try {
+                                await setDoc(userDocRef, initialData);
+                            } catch (err) {
+                                console.error("Error crítico al inicializar usuario localmente en Firestore:", err.message);
+                            }
                         }
                     }
                 });

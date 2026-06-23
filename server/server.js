@@ -1640,6 +1640,94 @@ Professional, sharp, persuasive, and in native Spanish (es-ES). No fluff, no int
 });
 
 // ═══════════════════════════════════════════════════
+// ENDPOINT DE INICIALIZACIÓN DE USUARIO CON PROTECCIÓN DE IP
+// ═══════════════════════════════════════════════════
+
+app.post('/api/user/initialize', checkAuth, async (req, res) => {
+    try {
+        const { uid, email } = req.user; // req.user es inyectado por checkAuth al verificar el IdToken
+        
+        // Obtener la IP real del cliente considerando proxies (Cloudflare, Vercel, etc.)
+        let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        if (ip && ip.includes(',')) {
+            ip = ip.split(',')[0].trim();
+        }
+        
+        console.log(`🔒 Solicitud de inicialización para usuario ${email || uid} desde IP: ${ip}`);
+
+        const hasFirebaseAdmin = admin.apps.length > 0;
+        if (!hasFirebaseAdmin) {
+            console.warn("⚠️ Firebase Admin no inicializado (Modo Abierto local). No se puede validar la IP.");
+            return res.json({ 
+                success: true, 
+                message: "Inicialización local sin validación de IP.", 
+                credits: 1 
+            });
+        }
+
+        const dbAdmin = admin.firestore();
+        const userDocRef = dbAdmin.collection('users').doc(uid);
+        const ipDocRef = dbAdmin.collection('registered_ips').doc(ip);
+
+        // 1. Verificar si el usuario ya existe en Firestore para evitar sobrescribir datos de pago
+        const userSnap = await userDocRef.get();
+        if (userSnap.exists) {
+            return res.json({ 
+                success: true, 
+                message: "El usuario ya estaba registrado en el sistema.", 
+                credits: userSnap.data().credits || 0 
+            });
+        }
+
+        // 2. Verificar si la dirección IP ya ha reclamado su crédito gratis de bienvenida
+        let creditsToGive = 1;
+        let isIpRegistered = false;
+        
+        if (ip !== 'unknown' && ip !== '::1' && ip !== '127.0.0.1' && ip !== 'localhost') {
+            const ipSnap = await ipDocRef.get();
+            if (ipSnap.exists) {
+                console.warn(`🚨 Multicuentas detectado: IP ${ip} ya inicializó una cuenta (${ipSnap.data().userId}). Se asignan 0 créditos.`);
+                creditsToGive = 0;
+                isIpRegistered = true;
+            }
+        }
+
+        // 3. Crear el perfil del usuario en Firestore de forma segura
+        const initialUserData = {
+            email: email || '',
+            subscribed: false,
+            plan: 'Gratuito',
+            credits: creditsToGive,
+            creditsTotal: creditsToGive,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+        await userDocRef.set(initialUserData);
+
+        // 4. Si la IP es limpia y es válida, registrarla en la base de datos para bloquear futuros abusos
+        if (creditsToGive > 0 && ip !== 'unknown' && ip !== '::1' && ip !== '127.0.0.1' && ip !== 'localhost') {
+            await ipDocRef.set({
+                userId: uid,
+                email: email || '',
+                timestamp: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        res.json({
+            success: true,
+            credits: creditsToGive,
+            ipUsed: isIpRegistered,
+            message: creditsToGive > 0 
+                ? "Cuenta creada con éxito. Has recibido 1 crédito de regalo." 
+                : "IP ya registrada anteriormente. Tu cuenta ha sido creada con 0 créditos iniciales."
+        });
+
+    } catch (err) {
+        console.error('Error inicializando usuario:', err.message);
+        res.status(500).json({ error: 'Error al inicializar el usuario en el sistema.' });
+    }
+});
+
+// ═══════════════════════════════════════════════════
 // BINANCE PAY ENDPOINTS
 // ═══════════════════════════════════════════════════
 
